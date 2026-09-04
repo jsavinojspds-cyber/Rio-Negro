@@ -1,0 +1,45 @@
+name: Atualizar dados do Rio Negro
+
+on:
+  schedule:
+    - cron: '0 12 * * 1-5'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install -r scripts/requirements.txt
+
+      - name: Rodar scraper
+        id: scraper
+        run: python scripts/scraper.py --verbose
+
+      - name: Copiar arquivos atualizados para a raiz (GitHub Pages)
+        run: |
+          cp src/index.html index.html
+          cp src/data.js data.js
+
+      - name: Commit e push (se houver mudanças)
+        run: |
+          git config user.name "Rio Negro Bot"
+          git config user.email "actions@github.com"
+          git add data.js src/data.js data/rio-negro-cotas.json index.html
+          if git diff --staged --quiet; then
+            echo "Nenhuma mudança para commitar."
+          else
+            git commit -m "🌊 Atualização automática: $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
