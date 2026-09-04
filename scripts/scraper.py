@@ -219,6 +219,21 @@ def main():
         sys.exit(1)
 
     resultados = parse_tabelas(html, verbose=args.verbose)
+    
+    # Correções conhecidas de erros de digitação no site oficial
+    # (o site mostra o dígito errado e provavelmente nunca vai corrigir)
+    CORRECOES_CONHECIDAS = {
+        ("2026-06", 6): 28.12,  # site mostra 20.12, valor real é 28.12
+    }
+    for item in resultados:
+        key = f"{item['ano']}-{item['mes']:02d}"
+        for i, cota in enumerate(item["cotas"]):
+            dia = i + 1
+            if (key, dia) in CORRECOES_CONHECIDAS:
+                valor_correto = CORRECOES_CONHECIDAS[(key, dia)]
+                if cota != valor_correto:
+                    print(f"🔧 Corrigindo erro conhecido: {key} dia {dia}: {cota}m → {valor_correto}m")
+                    item["cotas"][i] = valor_correto
 
     if not resultados:
         print("❌ Nenhuma tabela de dados foi encontrada na página.")
