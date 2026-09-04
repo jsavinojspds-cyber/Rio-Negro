@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Rio Negro Dashboard | Manaus</title>
+    <!-- PWA Configuration -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Rio Negro">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0a1929">
+    <meta name="description" content="Monitor do nível do Rio Negro · Porto de Manaus">
+    
+    <!-- Ícone do App (SVG inline para não precisar de arquivo externo) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23132f4c'/%3E%3Cstop offset='100%25' style='stop-color:%2300d4ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Cpath d='M30 100 Q 50 80 70 100 T 110 100 T 150 100' stroke='white' stroke-width='6' fill='none' opacity='0.9'/%3E%3Cpath d='M30 120 Q 50 100 70 120 T 110 120 T 150 120' stroke='white' stroke-width='6' fill='none' opacity='0.7'/%3E%3Cpath d='M30 140 Q 50 120 70 140 T 110 140 T 150 140' stroke='white' stroke-width='6' fill='none' opacity='0.5'/%3E%3Ctext x='90' y='65' font-family='Arial' font-size='44' font-weight='bold' fill='white' text-anchor='middle'%3E〜%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23132f4c'/%3E%3Cstop offset='100%25' style='stop-color:%2300d4ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Cpath d='M30 100 Q 50 80 70 100 T 110 100 T 150 100' stroke='white' stroke-width='6' fill='none' opacity='0.9'/%3E%3Cpath d='M30 120 Q 50 100 70 120 T 110 120 T 150 120' stroke='white' stroke-width='6' fill='none' opacity='0.7'/%3E%3Cpath d='M30 140 Q 50 120 70 140 T 110 140 T 150 140' stroke='white' stroke-width='6' fill='none' opacity='0.5'/%3E%3C/svg%3E">
+    
+    <!-- Manifest inline -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Rio%20Negro%20Manaus%22%2C%22short_name%22%3A%22Rio%20Negro%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a1929%22%2C%22theme_color%22%3A%22%230a1929%22%2C%22orientation%22%3A%22portrait%22%7D">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-dark: #0a1929;
+            --bg-card: #132f4c;
+            --bg-card-hover: #173a5e;
+            --accent: #00d4ff;
+            --accent-2: #66b2ff;
+            --text-primary: #ffffff;
+            --text-secondary: #b2bac2;
+            --success: #4caf50;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --border: #1e4976;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 16px;
+            background-image: 
+                radial-gradient(at 47% 33%, hsl(212.00, 70%, 15%) 0, transparent 59%),
+                radial-gradient(at 82% 65%, hsl(218.00, 39%, 11%) 0, transparent 55%);
+        }
+        
+        .container { max-width: 1600px; margin: 0 auto; }
+        
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #132f4c 0%, #173a5e 100%);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%);
+        }
+        
+        .header-content { position: relative; z-index: 1; }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .header h1 {
+            font-size: 1.6em;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header h1::before {
+            content: '〜';
+            color: var(--accent);
+            font-size: 1.3em;
+        }
+        
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-top: 4px;
+        }
+        
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(76, 175, 80, 0.15);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: var(--success);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+        
+        /* KPI GRID */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .kpi-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.15);
+        }
+        
+        .kpi-icon {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 1.5em;
+            opacity: 0.3;
+        }
+        
+        .kpi-label {
+            color: var(--text-secondary);
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .kpi-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .kpi-meta {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+        }
+        
+        .kpi-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        .trend-up { background: rgba(76, 175, 80, 0.15); color: var(--success); }
+        .trend-down { background: rgba(244, 67, 54, 0.15); color: var(--danger); }
+        .trend-neutral { background: rgba(255, 152, 0, 0.15); color: var(--warning); }
+        
+        /* SECTION */
+        .section {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .section-title {
+            font-size: 1.05em;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 3px;
+            height: 18px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+        
+        /* FILTERS */
+        .filter-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        
+        .filter-btn.active {
+            background: var(--accent);
+            color: var(--bg-dark);
+            border-color: var(--accent);
+        }
+        
+        /* CHART CONTAINER */
+        .chart-container {
+            position: relative;
+            height: 320px;
+        }
+        
+        .chart-container-tall { height: 380px; }
+        .chart-container-small { height: 240px; }
+        
+        /* GRID LAYOUTS */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 1024px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+        
+        /* TABLE */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        
+        .data-table th {
+            text-align: left;
+            padding: 10px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .data-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(30, 73, 118, 0.4);
+        }
+        
+        .data-table tr:hover { background: rgba(0, 212, 255, 0.05); }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        
+        .badge-enchente { background: rgba(76, 175, 80, 0.15); color: var(--success); }
+        .badge-vazante { background: rgba(244, 67, 54, 0.15); color: var(--danger); }
+        .badge-estavel { background: rgba(255, 152, 0, 0.15); color: var(--warning); }
+        
+        /* INSIGHTS */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        
+        .insight-card {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(102, 178, 255, 0.05) 100%);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        
+        .insight-title {
+            font-size: 0.85em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .insight-text {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        .insight-text strong { color: var(--text-primary); }
+        
+        /* RIVER GAUGE */
+        .gauge-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 0;
+        }
+        
+        .gauge-visual {
+            width: 60px;
+            height: 280px;
+            background: linear-gradient(to top, #1e4976 0%, #1e4976 100%);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        
+        .gauge-water {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, #0277bd 0%, #00d4ff 100%);
+            transition: height 1s ease-out;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .gauge-water::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            animation: wave 3s infinite ease-in-out;
+        }
+        
+        @keyframes wave {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-5%); }
+        }
+        
+        .gauge-marks {
+            position: absolute;
+            left: -45px;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 0.7em;
+            color: var(--text-secondary);
+        }
+        
+        .gauge-info {
+            flex: 1;
+        }
+        
+        .gauge-info h3 {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+        
+        .gauge-current {
+            font-size: 2.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        
+        .gauge-stats {
+            margin-top: 16px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+        
+        .gauge-stats div {
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .gauge-stats strong { color: var(--text-primary); }
+        
+        /* HEATMAP */
+        .heatmap {
+            display: grid;
+            grid-template-columns: 80px repeat(12, 1fr);
+            gap: 3px;
+            margin-top: 12px;
+        }
+        
+        .heatmap-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 40px;
+        }
+        
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+            z-index: 2;
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+        }
+        
+        .heatmap-cell.empty { background: rgba(30, 73, 118, 0.3); }
+        
+        /* MOBILE */
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header h1 { font-size: 1.3em; }
+            .kpi-value { font-size: 1.5em; }
+            .chart-container { height: 260px; }
+            .heatmap { grid-template-columns: 60px repeat(12, 1fr); }
+            .heatmap-cell { min-height: 28px; font-size: 0.6em; }
+        }
+        
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8em;
+            padding: 20px 0 10px;
+            opacity: 0.7;
+        }
+        
+        .selector {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+
+        /* HEATMAP MAIO HORIZONTAL - TABELA */
+        .heatmap-maio-table-wrapper {
+            overflow-x: auto;
+            margin-top: 12px;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 6px;
+        }
+        
+        .heatmap-maio-table {
+            display: grid;
+            grid-template-columns: 70px repeat(31, minmax(48px, 1fr));
+            gap: 3px;
+            min-width: 100%;
+        }
+        
+        .hm-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85em;
+            color: var(--text-primary);
+            font-weight: 700;
+            padding: 10px 4px;
+            background: rgba(0, 212, 255, 0.12);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        
+        .hm-day-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 8px 2px;
+            background: rgba(30, 73, 118, 0.35);
+            border-radius: 5px;
+        }
+        
+        .hm-year-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95em;
+            color: var(--text-primary);
+            font-weight: 700;
+            padding: 8px 4px;
+            background: rgba(0, 212, 255, 0.12);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        
+        .hm-cell {
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 10px 2px;
+            color: rgba(0,0,0,0.9);
+            min-height: 38px;
+            text-align: center;
+        }
+        
+        .hm-cell:hover {
+            transform: scale(1.15);
+            z-index: 2;
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.6);
+            border: 2px solid #00d4ff;
+        }
+        
+        .hm-cell.empty { 
+            background: rgba(30, 73, 118, 0.2); 
+            color: var(--text-secondary);
+        }
+        
+        .hm-cell.highlight {
+            box-shadow: 0 0 0 2px var(--accent);
+            position: relative;
+        }
+        
+        @media (max-width: 768px) {
+            .heatmap-maio-table { 
+                grid-template-columns: 55px repeat(31, minmax(40px, 1fr));
+                gap: 2px;
+            }
+            .hm-cell { 
+                font-size: 0.65em;
+                padding: 8px 1px;
+                min-height: 32px;
+            }
+            .hm-day-label, .hm-year-label { font-size: 0.7em; }
+        }
+
+        /* HEATMAP HORIZONTAL MAIO */
+        .heatmap-maio-horizontal {
+            display: grid;
+            grid-template-columns: 60px repeat(31, 1fr);
+            gap: 2px;
+            margin-top: 12px;
+            overflow-x: auto;
+        }
+        
+        .hmh-ano-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85em;
+            color: var(--text-primary);
+            font-weight: 700;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 4px;
+            padding: 8px 4px;
+        }
+        
+        .hmh-day-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65em;
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 4px 0;
+        }
+        
+        .hmh-cell {
+            aspect-ratio: 1;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 24px;
+            position: relative;
+        }
+        
+        .hmh-cell:hover {
+            transform: scale(1.3);
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.6);
+            border: 2px solid #00d4ff;
+        }
+        
+        .hmh-cell.empty { 
+            background: rgba(30, 73, 118, 0.15);
+        }
+        
+        .hmh-cell.highlight::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(0, 212, 255, 0.9);
+        }
+        
+        @media (max-width: 768px) {
+            .heatmap-maio-horizontal { 
+                grid-template-columns: 40px repeat(31, minmax(14px, 1fr));
+            }
+            .hmh-cell { min-height: 18px; }
+            .hmh-day-header { font-size: 0.5em; }
+            .hmh-ano-label { font-size: 0.7em; }
+        }
+
+        /* Modo PWA Standalone */
+        @media (display-mode: standalone) {
+            body {
+                padding-top: env(safe-area-inset-top, 20px);
+                padding-bottom: env(safe-area-inset-bottom, 20px);
+                padding-left: env(safe-area-inset-left, 16px);
+                padding-right: env(safe-area-inset-right, 16px);
+            }
+        }
+        
+        /* Indicador de "modo app" */
+        .app-mode-indicator {
+            display: none;
+        }
+        @media (display-mode: standalone) {
+            .app-mode-indicator {
+                display: inline-flex;
+                margin-left: 8px;
+                background: rgba(0, 212, 255, 0.15);
+                color: #00d4ff;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 0.7em;
+                font-weight: 600;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-top">
+                    <div>
+                        <h1>Rio Negro · Manaus <span class="app-mode-indicator">📱 APP</span></h1>
+                        <div class="subtitle">Dashboard hidrométrico · Porto de Manaus</div>
+                    </div>
+                    <div class="live-indicator">
+                        <div class="pulse"></div>
+                        <span id="header-data">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- KPIs (preenchidos dinamicamente via JS a partir de data.js) -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon">📍</div>
+                <div class="kpi-label">Cota Atual</div>
+                <div class="kpi-value" id="kpi-atual">— m</div>
+                <div class="kpi-meta" id="kpi-atual-data">—</div>
+                <span class="kpi-trend" id="kpi-atual-trend">—</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon">🔝</div>
+                <div class="kpi-label">Pico Histórico</div>
+                <div class="kpi-value" id="kpi-pico-hist">— m</div>
+                <div class="kpi-meta" id="kpi-pico-hist-data">—</div>
+                <span class="kpi-trend trend-up">Cheia recorde</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon">🔻</div>
+                <div class="kpi-label">Vazante Mínima</div>
+                <div class="kpi-value" id="kpi-min-hist">— m</div>
+                <div class="kpi-meta" id="kpi-min-hist-data">—</div>
+                <span class="kpi-trend trend-down">Seca histórica</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon">📊</div>
+                <div class="kpi-label">Amplitude Histórica</div>
+                <div class="kpi-value" id="kpi-amplitude">— m</div>
+                <div class="kpi-meta">Variação total</div>
+                <span class="kpi-trend trend-neutral">Ciclo completo</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon">⚡</div>
+                <div class="kpi-label">Tendência (7d)</div>
+                <div class="kpi-value" id="kpi-tendencia">— cm</div>
+                <div class="kpi-meta" id="kpi-tendencia-meta">—</div>
+                <span class="kpi-trend" id="kpi-tendencia-trend">—</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon">📅</div>
+                <div class="kpi-label">Fase Atual</div>
+                <div class="kpi-value" id="kpi-fase" style="font-size: 1.3em;">—</div>
+                <div class="kpi-meta" id="kpi-fase-meta">—</div>
+                <span class="kpi-trend" id="kpi-fase-trend">—</span>
+            </div>
+        </div>
+        
+        <!-- RIVER GAUGE + INSIGHTS -->
+        <div class="grid-3">
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Série Temporal Completa</div>
+                    <div class="filter-group">
+                        <button class="filter-btn active" data-period="all">Tudo</button>
+                        <button class="filter-btn" data-period="2024">2024</button>
+                        <button class="filter-btn" data-period="2025">2025</button>
+                        <button class="filter-btn" data-period="2026">2026</button>
+                    </div>
+                </div>
+                <div class="chart-container chart-container-tall">
+                    <canvas id="chartSerie"></canvas>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title" style="margin-bottom: 16px;">Régua do Rio</div>
+                <div class="gauge-container">
+                    <div class="gauge-visual">
+                        <div class="gauge-water" id="gauge-water" style="height: 75%;"></div>
+                        <div class="gauge-marks">
+                            <span>30m</span>
+                            <span>25m</span>
+                            <span>20m</span>
+                            <span>15m</span>
+                            <span>10m</span>
+                        </div>
+                    </div>
+                    <div class="gauge-info">
+                        <h3>Nível atual</h3>
+                        <div class="gauge-current" id="gauge-current">—</div>
+                        <div class="gauge-stats" id="gauge-stats">
+                            <div>Carregando…</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- COMPARAÇÃO MULTI-ANO -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Comparação Anual · Mesma Janela do Ano</div>
+                <div class="filter-group">
+                    <button class="filter-btn active" data-year-filter="all">2024 · 2025 · 2026</button>
+                    <button class="filter-btn" data-year-filter="2425">2024 vs 2025</button>
+                    <button class="filter-btn" data-year-filter="2526">2025 vs 2026</button>
+                </div>
+            </div>
+            <div class="chart-container chart-container-tall">
+                <canvas id="chartComparacao"></canvas>
+            </div>
+        </div>
+        
+        <!-- GRID 2 GRÁFICOS -->
+        <div class="grid-2">
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Cota Média Mensal</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartMensal"></canvas>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Velocidade de Variação (cm/dia)</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartVelocidade"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- HEATMAP MENSAL -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Heatmap · Cota Média Mensal por Ano</div>
+                <span style="font-size: 0.8em; color: var(--text-secondary);">Cores: 🟦 baixo → 🟥 alto</span>
+            </div>
+            <div class="heatmap" id="heatmap"></div>
+        </div>
+        
+        <!-- HEATMAP DIÁRIO POR MÊS -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Heatmap Diário · <span id="mes-titulo">Junho</span> · 2024 vs 2025 vs 2026</div>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <select class="selector" id="mes-select">
+                        <option value="01">Janeiro</option>
+                        <option value="02">Fevereiro</option>
+                        <option value="03">Março</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Maio</option>
+                        <option value="06">Junho</option>
+                        <option value="07">Julho</option>
+                        <option value="08">Agosto</option>
+                        <option value="09">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+                    <span style="font-size: 0.8em; color: var(--text-secondary);">🟦 baixo → 🟥 alto · ● hoje</span>
+                </div>
+            </div>
+            <div class="heatmap-maio-table-wrapper">
+                <div class="heatmap-maio-table" id="heatmap-maio"></div>
+            </div>
+        </div>
+        
+        <!-- RESUMO MENSAL TABELA -->
+        <div class="grid-2">
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Resumo Mensal</div>
+                    <select class="selector" id="year-select">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                    </select>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Mês</th>
+                            <th>Início</th>
+                            <th>Fim</th>
+                            <th>Var.</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-mensal"></tbody>
+                </table>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Eventos Extremos</div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Data</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>🔝 Cheia máxima</td>
+                            <td>05-08 Jul 2025</td>
+                            <td><strong>29.05 m</strong></td>
+                        </tr>
+                        <tr>
+                            <td>🔝 Cheia 2024</td>
+                            <td>16-22 Jun 2024</td>
+                            <td><strong>26.85 m</strong></td>
+                        </tr>
+                        <tr>
+                            <td>🔻 Seca histórica</td>
+                            <td>09-12 Out 2024</td>
+                            <td><strong>12.11 m</strong></td>
+                        </tr>
+                        <tr>
+                            <td>⚡ Maior subida 24h</td>
+                            <td>13-14 Nov 2024</td>
+                            <td><strong>+21 cm</strong></td>
+                        </tr>
+                        <tr>
+                            <td>⚡ Maior descida 24h</td>
+                            <td>03 Set 2024</td>
+                            <td><strong>-27 cm</strong></td>
+                        </tr>
+                        <tr>
+                            <td>📊 Amplitude 2024</td>
+                            <td>Ano completo</td>
+                            <td><strong>14.74 m</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- INSIGHTS -->
+        <div class="section">
+            <div class="section-title" style="margin-bottom: 16px;">Insights Operacionais</div>
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <div class="insight-title">📅 Sazonalidade</div>
+                    <div class="insight-text">
+                        O ciclo do Rio Negro segue um padrão claro: <strong>enchente de Dez a Jun</strong>, <strong>pico em Jun-Jul</strong>, <strong>vazante de Jul a Out</strong>, <strong>fundo em Out-Nov</strong>.
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-title">⚠️ Atenção</div>
+                    <div class="insight-text">
+                        Setembro é o mês mais crítico para vazante — <strong>recordes de -27 cm/dia em 2024</strong>. Planeje navegação e logística considerando este período.
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-title" id="insight-dinamico-titulo">📊 Situação Atual</div>
+                    <div class="insight-text" id="insight-dinamico-texto">
+                        Carregando análise…
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-title">🎯 Recomendação</div>
+                    <div class="insight-text">
+                        Para atividades aquáticas (jet ski, passeios), período <strong>Mai-Ago</strong> oferece melhores condições. Evite Out-Nov pelo nível baixo.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            Dashboard · Jean Savino · Dados: Porto de Manaus · Atualizado em <span id="footer-data">—</span>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+        // ============= DADOS =============
+        // (objeto "dados" já carregado via data.js)
+        
+        const mesesNomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        
+        // ============= MOTOR DE CÁLCULO DINÂMICO =============
+        // Tudo aqui é derivado automaticamente do objeto `dados` (vindo de data.js).
+        // Isso permite que o scraper (rodando via GitHub Actions) só precise
+        // atualizar data.js — nenhum KPI, insight ou texto precisa ser editado à mão.
+        
+        function buildFlatSeries() {
+            const chaves = Object.keys(dados).sort();
+            let flat = [];
+            chaves.forEach(k => {
+                const [ano, mes] = k.split('-');
+                dados[k].forEach((cota, idx) => {
+                    flat.push({ ano: parseInt(ano), mes: parseInt(mes), dia: idx + 1, cota, key: k });
+                });
+            });
+            return flat;
+        }
+        
+        function buscarMesmoDia(ano, mes, dia) {
+            const key = `${ano}-${String(mes).padStart(2, '0')}`;
+            const arr = dados[key];
+            if (!arr || arr.length === 0) return null;
+            // Se o dia exato não existir ainda naquele mês/ano, usa o último disponível
+            const idx = Math.min(dia - 1, arr.length - 1);
+            return arr[idx];
+        }
+        
+        const flatSeries = buildFlatSeries();
+        const ultimo = flatSeries[flatSeries.length - 1];
+        const penultimo = flatSeries.length > 1 ? flatSeries[flatSeries.length - 2] : null;
+        const seteDiasAtras = flatSeries.length > 7 ? flatSeries[flatSeries.length - 8] : null;
+        
+        const picoHist = flatSeries.reduce((max, p) => p.cota > max.cota ? p : max, flatSeries[0]);
+        const minHist = flatSeries.reduce((min, p) => p.cota < min.cota ? p : min, flatSeries[0]);
+        
+        const dadosAnoCorrente = flatSeries.filter(p => p.ano === ultimo.ano);
+        const picoAno = dadosAnoCorrente.reduce((max, p) => p.cota > max.cota ? p : max, dadosAnoCorrente[0]);
+        
+        function renderKPIs() {
+            const var24h = penultimo ? (ultimo.cota - penultimo.cota) * 100 : 0;
+            const var7d = seteDiasAtras ? (ultimo.cota - seteDiasAtras.cota) * 100 : 0;
+            
+            let fase, faseColorClass;
+            if (var7d > 15) { fase = 'Enchente'; faseColorClass = 'trend-up'; }
+            else if (var7d < -15) { fase = 'Vazante'; faseColorClass = 'trend-down'; }
+            else { fase = 'Estável'; faseColorClass = 'trend-neutral'; }
+            
+            const dataFormatadaCurta = `${String(ultimo.dia).padStart(2,'0')} ${mesesNomes[ultimo.mes-1]} ${ultimo.ano}`;
+            const dataFormatadaBarra = `${String(ultimo.dia).padStart(2,'0')}/${mesesNomes[ultimo.mes-1]}/${ultimo.ano}`;
+            
+            // --- KPI: Cota Atual ---
+            document.getElementById('kpi-atual').textContent = ultimo.cota.toFixed(2) + ' m';
+            document.getElementById('kpi-atual-data').textContent = dataFormatadaCurta;
+            const trendAtualEl = document.getElementById('kpi-atual-trend');
+            if (var24h > 0) {
+                trendAtualEl.className = 'kpi-trend trend-up';
+                trendAtualEl.textContent = `↑ +${var24h.toFixed(0)} cm vs ontem`;
+            } else if (var24h < 0) {
+                trendAtualEl.className = 'kpi-trend trend-down';
+                trendAtualEl.textContent = `↓ ${var24h.toFixed(0)} cm vs ontem`;
+            } else {
+                trendAtualEl.className = 'kpi-trend trend-neutral';
+                trendAtualEl.textContent = `= estável vs ontem`;
+            }
+            
+            // --- KPI: Pico e Mínima históricos ---
+            document.getElementById('kpi-pico-hist').textContent = picoHist.cota.toFixed(2) + ' m';
+            document.getElementById('kpi-pico-hist-data').textContent = `${mesesNomes[picoHist.mes-1]}/${picoHist.ano}`;
+            document.getElementById('kpi-min-hist').textContent = minHist.cota.toFixed(2) + ' m';
+            document.getElementById('kpi-min-hist-data').textContent = `${mesesNomes[minHist.mes-1]}/${minHist.ano}`;
+            document.getElementById('kpi-amplitude').textContent = (picoHist.cota - minHist.cota).toFixed(2) + ' m';
+            
+            // --- KPI: Tendência 7 dias ---
+            document.getElementById('kpi-tendencia').textContent = (var7d >= 0 ? '+' : '') + var7d.toFixed(0) + ' cm';
+            document.getElementById('kpi-tendencia-meta').textContent = fase === 'Enchente' ? 'Enchente ativa' : fase === 'Vazante' ? 'Vazante ativa' : 'Estável / possível pico';
+            const tendTrendEl = document.getElementById('kpi-tendencia-trend');
+            tendTrendEl.className = 'kpi-trend ' + faseColorClass;
+            tendTrendEl.textContent = var7d > 0 ? '↑ subindo' : var7d < 0 ? '↓ descendo' : '→ estável';
+            
+            // --- KPI: Fase Atual ---
+            document.getElementById('kpi-fase').textContent = fase;
+            document.getElementById('kpi-fase-meta').textContent = `Pico ${ultimo.ano}: ${picoAno.cota.toFixed(2)}m (${mesesNomes[picoAno.mes-1]})`;
+            const distPico = (ultimo.cota - picoAno.cota) * 100;
+            const faseTrendEl = document.getElementById('kpi-fase-trend');
+            faseTrendEl.className = 'kpi-trend ' + faseColorClass;
+            faseTrendEl.textContent = Math.abs(distPico) < 1 ? 'No pico do ano' : `${distPico > 0 ? '+' : ''}${distPico.toFixed(0)}cm do pico`;
+            
+            // --- Régua visual (gauge) ---
+            const GAUGE_MIN = 10, GAUGE_MAX = 30;
+            const pct = Math.max(0, Math.min(100, ((ultimo.cota - GAUGE_MIN) / (GAUGE_MAX - GAUGE_MIN)) * 100));
+            document.getElementById('gauge-water').style.height = pct + '%';
+            document.getElementById('gauge-current').textContent = ultimo.cota.toFixed(2) + 'm';
+            
+            const cotaAnoAnt = buscarMesmoDia(ultimo.ano - 1, ultimo.mes, ultimo.dia);
+            const cotaDoisAnosAnt = buscarMesmoDia(ultimo.ano - 2, ultimo.mes, ultimo.dia);
+            const diffAnoAnt = cotaAnoAnt !== null ? (ultimo.cota - cotaAnoAnt) * 100 : null;
+            const diffDoisAnosAnt = cotaDoisAnosAnt !== null ? (ultimo.cota - cotaDoisAnosAnt) * 100 : null;
+            
+            let gaugeHtml = `<div>Status <strong>${fase}</strong></div>`;
+            gaugeHtml += `<div>Variação 24h <strong style="color: ${var24h >= 0 ? 'var(--success)' : 'var(--danger)'};">${var24h >= 0 ? '+' : ''}${var24h.toFixed(0)} cm</strong></div>`;
+            gaugeHtml += `<div>Pico ${ultimo.ano} <strong>${picoAno.cota.toFixed(2)}m (${mesesNomes[picoAno.mes-1]})</strong></div>`;
+            if (diffAnoAnt !== null) {
+                gaugeHtml += `<div>vs ${mesesNomes[ultimo.mes-1]}/${ultimo.ano-1} <strong style="color: ${diffAnoAnt >= 0 ? 'var(--success)' : 'var(--danger)'};">${diffAnoAnt >= 0 ? '+' : ''}${diffAnoAnt.toFixed(0)} cm</strong></div>`;
+            }
+            if (diffDoisAnosAnt !== null) {
+                gaugeHtml += `<div>vs ${mesesNomes[ultimo.mes-1]}/${ultimo.ano-2} <strong style="color: ${diffDoisAnosAnt >= 0 ? 'var(--success)' : 'var(--danger)'};">${diffDoisAnosAnt >= 0 ? '+' : ''}${diffDoisAnosAnt.toFixed(0)} cm</strong></div>`;
+            }
+            document.getElementById('gauge-stats').innerHTML = gaugeHtml;
+            
+            // --- Header / Footer ---
+            document.getElementById('header-data').textContent = dataFormatadaBarra;
+            document.getElementById('footer-data').textContent = dataFormatadaBarra;
+            
+            // --- Insight dinâmico ---
+            let insightTitulo, insightTexto;
+            if (fase === 'Vazante') {
+                insightTitulo = '📉 Vazante em curso';
+                insightTexto = `Cota atual (${ultimo.cota.toFixed(2)}m) caiu ${Math.abs(var7d).toFixed(0)}cm nos últimos 7 dias.`;
+            } else if (fase === 'Enchente') {
+                insightTitulo = '📈 Enchente em curso';
+                insightTexto = `Cota atual (${ultimo.cota.toFixed(2)}m) subiu ${var7d.toFixed(0)}cm nos últimos 7 dias.`;
+            } else {
+                insightTitulo = '📊 Nível estável';
+                insightTexto = `Cota atual (${ultimo.cota.toFixed(2)}m) está estável nos últimos 7 dias — possível pico ou fundo do ciclo.`;
+            }
+            if (diffAnoAnt !== null) {
+                insightTexto += ` Está ${diffAnoAnt >= 0 ? diffAnoAnt.toFixed(0)+'cm acima' : Math.abs(diffAnoAnt).toFixed(0)+'cm abaixo'} do mesmo dia em ${ultimo.ano-1}`;
+                insightTexto += diffDoisAnosAnt !== null
+                    ? ` e ${diffDoisAnosAnt >= 0 ? diffDoisAnosAnt.toFixed(0)+'cm acima' : Math.abs(diffDoisAnosAnt).toFixed(0)+'cm abaixo'} de ${ultimo.ano-2}.`
+                    : '.';
+            }
+            document.getElementById('insight-dinamico-titulo').textContent = insightTitulo;
+            document.getElementById('insight-dinamico-texto').textContent = insightTexto;
+        }
+        
+        renderKPIs();
+        
+        // Cores e tema
+        Chart.defaults.color = '#b2bac2';
+        Chart.defaults.borderColor = 'rgba(30, 73, 118, 0.4)';
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto';
+        
+        // ============= SÉRIE TEMPORAL =============
+        function montarSerieCompleta(filtroAno = 'all') {
+            let labels = [];
+            let cotas = [];
+            
+            const chaves = Object.keys(dados).sort();
+            for (const chave of chaves) {
+                const [ano, mes] = chave.split('-');
+                if (filtroAno !== 'all' && ano !== filtroAno) continue;
+                
+                dados[chave].forEach((cota, i) => {
+                    labels.push(`${String(i+1).padStart(2,'0')}/${mes}/${ano.slice(2)}`);
+                    cotas.push(cota);
+                });
+            }
+            return { labels, cotas };
+        }
+        
+        let chartSerie;
+        function criarChartSerie(filtroAno = 'all') {
+            const { labels, cotas } = montarSerieCompleta(filtroAno);
+            
+            if (chartSerie) chartSerie.destroy();
+            
+            const ctx = document.getElementById('chartSerie').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 380);
+            gradient.addColorStop(0, 'rgba(0, 212, 255, 0.4)');
+            gradient.addColorStop(1, 'rgba(0, 212, 255, 0.01)');
+            
+            chartSerie = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Cota (m)',
+                        data: cotas,
+                        borderColor: '#00d4ff',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#00d4ff',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(10, 25, 41, 0.95)',
+                            borderColor: '#00d4ff',
+                            borderWidth: 1,
+                            padding: 12,
+                            titleColor: '#00d4ff',
+                            bodyColor: '#fff',
+                            callbacks: {
+                                label: (ctx) => `Cota: ${ctx.parsed.y.toFixed(2)} m`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 10, max: 30,
+                            ticks: { callback: (v) => v + ' m' },
+                            grid: { color: 'rgba(30, 73, 118, 0.3)' }
+                        },
+                        x: {
+                            ticks: { maxTicksLimit: 12, maxRotation: 0 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        criarChartSerie();
+        
+        // ============= COMPARAÇÃO ANUAL =============
+        let chartComparacao;
+        function criarComparacao(filtro = 'all') {
+            // Pega meses 1-12 de cada ano
+            const buildYear = (ano) => {
+                let arr = [];
+                for (let m = 1; m <= 12; m++) {
+                    const k = `${ano}-${String(m).padStart(2,'0')}`;
+                    if (dados[k]) arr.push(...dados[k]);
+                }
+                return arr;
+            };
+            
+            const d2024 = buildYear('2024');
+            const d2025 = buildYear('2025');
+            const d2026 = buildYear('2026');
+            const maxLen = Math.max(d2024.length, d2025.length, d2026.length);
+            const labels = Array.from({length: maxLen}, (_, i) => {
+                // Aproxima dia/mês
+                const dayOfYear = i + 1;
+                const date = new Date(2024, 0, dayOfYear);
+                return `${String(date.getDate()).padStart(2,'0')}/${mesesNomes[date.getMonth()]}`;
+            });
+            
+            const datasets = [];
+            if (filtro === 'all' || filtro === '2425') {
+                datasets.push({
+                    label: '2024',
+                    data: d2024,
+                    borderColor: '#90caf9',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 0,
+                });
+            }
+            if (filtro === 'all' || filtro === '2425' || filtro === '2526') {
+                datasets.push({
+                    label: '2025',
+                    data: d2025,
+                    borderColor: '#42a5f5',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 0,
+                });
+            }
+            if (filtro === 'all' || filtro === '2526') {
+                datasets.push({
+                    label: '2026',
+                    data: d2026,
+                    borderColor: '#00d4ff',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2.5,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    borderDash: filtro === 'all' ? [] : [],
+                });
+            }
+            
+            if (chartComparacao) chartComparacao.destroy();
+            
+            const ctx = document.getElementById('chartComparacao').getContext('2d');
+            chartComparacao = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { 
+                                color: '#fff', 
+                                usePointStyle: true, 
+                                pointStyle: 'line',
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(10, 25, 41, 0.95)',
+                            padding: 12,
+                            titleColor: '#00d4ff',
+                            callbacks: {
+                                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} m`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            min: 10, max: 30,
+                            ticks: { callback: (v) => v + ' m' },
+                            grid: { color: 'rgba(30, 73, 118, 0.3)' }
+                        },
+                        x: { 
+                            ticks: { maxTicksLimit: 12, maxRotation: 0 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        criarComparacao();
+        
+        // ============= GRÁFICO MENSAL =============
+        function mediaMensal(ano) {
+            const arr = [];
+            for (let m = 1; m <= 12; m++) {
+                const k = `${ano}-${String(m).padStart(2,'0')}`;
+                if (dados[k]) {
+                    arr.push(dados[k].reduce((a,b)=>a+b,0) / dados[k].length);
+                } else {
+                    arr.push(null);
+                }
+            }
+            return arr.map(v => v === null ? null : parseFloat(v.toFixed(2)));
+        }
+        
+        new Chart(document.getElementById('chartMensal').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: mesesNomes,
+                datasets: [
+                    {
+                        label: '2024',
+                        data: mediaMensal('2024'),
+                        borderColor: '#90caf9',
+                        backgroundColor: 'rgba(144, 202, 249, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#90caf9',
+                    },
+                    {
+                        label: '2025',
+                        data: mediaMensal('2025'),
+                        borderColor: '#42a5f5',
+                        backgroundColor: 'rgba(66, 165, 245, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#42a5f5',
+                    },
+                    {
+                        label: '2026',
+                        data: mediaMensal('2026'),
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.15)',
+                        borderWidth: 2.5,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#00d4ff',
+                        fill: true,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        position: 'top', 
+                        labels: { color: '#fff', usePointStyle: true, padding: 15 }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(10, 25, 41, 0.95)',
+                        padding: 12,
+                        callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y ? ctx.parsed.y.toFixed(2) + ' m' : 'sem dados'}`
+                        }
+                    }
+                },
+                scales: {
+                    y: { 
+                        min: 10, max: 30,
+                        ticks: { callback: (v) => v + ' m' },
+                        grid: { color: 'rgba(30, 73, 118, 0.3)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+        
+        // ============= VELOCIDADE =============
+        function velocidadeMensal(ano) {
+            const arr = [];
+            for (let m = 1; m <= 12; m++) {
+                const k = `${ano}-${String(m).padStart(2,'0')}`;
+                if (dados[k] && dados[k].length > 1) {
+                    let soma = 0, cont = 0;
+                    for (let i = 1; i < dados[k].length; i++) {
+                        soma += (dados[k][i] - dados[k][i-1]) * 100;
+                        cont++;
+                    }
+                    arr.push(parseFloat((soma/cont).toFixed(1)));
+                } else { arr.push(null); }
+            }
+            return arr;
+        }
+        
+        new Chart(document.getElementById('chartVelocidade').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: mesesNomes,
+                datasets: [
+                    {
+                        label: '2024',
+                        data: velocidadeMensal('2024'),
+                        backgroundColor: 'rgba(144, 202, 249, 0.7)',
+                        borderRadius: 6,
+                    },
+                    {
+                        label: '2025',
+                        data: velocidadeMensal('2025'),
+                        backgroundColor: 'rgba(66, 165, 245, 0.7)',
+                        borderRadius: 6,
+                    },
+                    {
+                        label: '2026',
+                        data: velocidadeMensal('2026'),
+                        backgroundColor: 'rgba(0, 212, 255, 0.9)',
+                        borderRadius: 6,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        position: 'top',
+                        labels: { color: '#fff', usePointStyle: true, padding: 15 }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(10, 25, 41, 0.95)',
+                        padding: 12,
+                        callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y ? (ctx.parsed.y > 0 ? '+' : '') + ctx.parsed.y + ' cm/dia' : '—'}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { callback: (v) => (v > 0 ? '+' : '') + v + ' cm' },
+                        grid: { color: 'rgba(30, 73, 118, 0.3)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+        
+        // ============= HEATMAP =============
+        function criarHeatmap() {
+            const container = document.getElementById('heatmap');
+            container.innerHTML = '';
+            
+            // Header
+            container.appendChild(criarCell('', 'heatmap-label'));
+            mesesNomes.forEach(m => container.appendChild(criarCell(m, 'heatmap-label')));
+            
+            // Calcular min/max para escala
+            let allValues = [];
+            ['2024','2025','2026'].forEach(ano => {
+                mediaMensal(ano).forEach(v => { if (v !== null) allValues.push(v); });
+            });
+            const minV = Math.min(...allValues);
+            const maxV = Math.max(...allValues);
+            
+            ['2024','2025','2026'].forEach(ano => {
+                container.appendChild(criarCell(ano, 'heatmap-label'));
+                const valores = mediaMensal(ano);
+                valores.forEach(v => {
+                    if (v === null) {
+                        container.appendChild(criarCell('', 'heatmap-cell empty'));
+                    } else {
+                        const norm = (v - minV) / (maxV - minV);
+                        const cor = corHeatmap(norm);
+                        const cell = criarCell(v.toFixed(1), 'heatmap-cell');
+                        cell.style.background = cor;
+                        cell.title = `${ano}: ${v.toFixed(2)}m`;
+                        container.appendChild(cell);
+                    }
+                });
+            });
+        }
+        
+        function criarCell(text, className) {
+            const div = document.createElement('div');
+            div.className = className;
+            div.textContent = text;
+            return div;
+        }
+        
+        function corHeatmap(norm) {
+            // Azul (baixo) → ciano → amarelo → vermelho (alto)
+            if (norm < 0.33) {
+                const t = norm / 0.33;
+                return `rgb(${30 + t*0}, ${73 + t*100}, ${118 + t*100})`;
+            } else if (norm < 0.66) {
+                const t = (norm - 0.33) / 0.33;
+                return `rgb(${30 + t*200}, ${173 + t*30}, ${218 - t*150})`;
+            } else {
+                const t = (norm - 0.66) / 0.34;
+                return `rgb(${230 + t*20}, ${203 - t*150}, ${68 - t*30})`;
+            }
+        }
+        criarHeatmap();
+        
+
+        // ============= HEATMAP DIÁRIO POR MÊS (HORIZONTAL) =============
+        const nomesMeses = {
+            '01': 'Janeiro', '02': 'Fevereiro', '03': 'Março', '04': 'Abril',
+            '05': 'Maio', '06': 'Junho', '07': 'Julho', '08': 'Agosto',
+            '09': 'Setembro', '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro'
+        };
+        
+        const diasDoMes = {
+            '01': 31, '02': 29, '03': 31, '04': 30, '05': 31, '06': 30,
+            '07': 31, '08': 31, '09': 30, '10': 31, '11': 30, '12': 31
+        };
+        
+        // "Hoje" = último dia com dado disponível (mais confiável que o relógio do
+        // dispositivo, pois reflete exatamente até onde o scraper atualizou)
+        const _ultimaChave = Object.keys(dados).sort().pop();
+        const _ultimoArr = dados[_ultimaChave];
+        const [_ultAno, _ultMes] = _ultimaChave.split('-');
+        const HOJE = {
+            ano: _ultAno,
+            mes: _ultMes,
+            dia: _ultimoArr.length
+        };
+        
+        function criarHeatmapMaio(mesNum) {
+            const container = document.getElementById('heatmap-maio');
+            container.innerHTML = '';
+            
+            // Atualizar título
+            const tituloEl = document.getElementById('mes-titulo');
+            if (tituloEl) tituloEl.textContent = nomesMeses[mesNum];
+            
+            const totalDias = diasDoMes[mesNum];
+            
+            // ROW 1: Header com dias
+            container.appendChild(criarCellMaio('Ano \\ Dia', 'hm-header'));
+            for (let d = 1; d <= totalDias; d++) {
+                container.appendChild(criarCellMaio(d, 'hm-day-label'));
+            }
+            
+            // Coletar todos valores do mês dos 3 anos para escala de cores
+            const allMes = [];
+            ['2024','2025','2026'].forEach(ano => {
+                const k = `${ano}-${mesNum}`;
+                if (dados[k]) dados[k].forEach(v => allMes.push(v));
+            });
+            
+            if (allMes.length === 0) {
+                container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--text-secondary); grid-column: 1/-1;">Sem dados disponíveis para este mês ainda.</div>';
+                return;
+            }
+            
+            const minV = Math.min(...allMes);
+            const maxV = Math.max(...allMes);
+            const range = maxV - minV || 1;
+            
+            const anos = ['2024','2025','2026'];
+            
+            // Uma linha por ano
+            anos.forEach(ano => {
+                container.appendChild(criarCellMaio(ano, 'hm-year-label'));
+                
+                const arr = dados[`${ano}-${mesNum}`] || [];
+                for (let d = 1; d <= totalDias; d++) {
+                    if (d - 1 < arr.length) {
+                        const v = arr[d - 1];
+                        const norm = (v - minV) / range;
+                        const cor = corHeatmap(norm);
+                        
+                        const isHoje = (ano === HOJE.ano && mesNum === HOJE.mes && d === HOJE.dia);
+                        const className = isHoje ? 'hm-cell highlight' : 'hm-cell';
+                        const cell = criarCellMaio(v.toFixed(2), className);
+                        cell.style.background = cor;
+                        cell.title = `${d}/${mesNum}/${ano}: ${v.toFixed(2)}m`;
+                        container.appendChild(cell);
+                    } else {
+                        container.appendChild(criarCellMaio('—', 'hm-cell empty'));
+                    }
+                }
+            });
+        }
+        
+        function criarCellMaio(text, className) {
+            const div = document.createElement('div');
+            div.className = className;
+            div.textContent = text;
+            return div;
+        }
+        
+        // Inicializar com o mês atual (detectado automaticamente)
+        const mesInicial = HOJE.mes;
+        document.getElementById('mes-select').value = mesInicial;
+        criarHeatmapMaio(mesInicial);
+        
+        // Listener do seletor
+        document.getElementById('mes-select').addEventListener('change', function(e) {
+            criarHeatmapMaio(e.target.value);
+        });
+
+        // ============= TABELA MENSAL =============
+        function atualizarTabela(ano) {
+            const tbody = document.getElementById('table-mensal');
+            tbody.innerHTML = '';
+            
+            for (let m = 1; m <= 12; m++) {
+                const k = `${ano}-${String(m).padStart(2,'0')}`;
+                if (!dados[k]) continue;
+                
+                const arr = dados[k];
+                const inicio = arr[0];
+                const fim = arr[arr.length-1];
+                const variacao = fim - inicio;
+                
+                let status, statusClass;
+                if (variacao > 0.5) { status = 'Enchente'; statusClass = 'badge-enchente'; }
+                else if (variacao < -0.5) { status = 'Vazante'; statusClass = 'badge-vazante'; }
+                else { status = 'Estável'; statusClass = 'badge-estavel'; }
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${mesesNomes[m-1]}</strong></td>
+                    <td>${inicio.toFixed(2)} m</td>
+                    <td>${fim.toFixed(2)} m</td>
+                    <td style="color: ${variacao >= 0 ? '#4caf50' : '#f44336'}">${variacao >= 0 ? '+' : ''}${variacao.toFixed(2)} m</td>
+                    <td><span class="badge ${statusClass}">${status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+        atualizarTabela('2026');
+        
+        document.getElementById('year-select').addEventListener('change', e => atualizarTabela(e.target.value));
+        
+        // ============= FILTROS =============
+        document.querySelectorAll('[data-period]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                criarChartSerie(this.dataset.period);
+            });
+        });
+        
+        document.querySelectorAll('[data-year-filter]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('[data-year-filter]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                criarComparacao(this.dataset.yearFilter);
+            });
+        });
+    
+        // ============= PWA INSTALLATION =============
+        (function() {
+            // Detectar se já está rodando como app instalado
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                              || window.navigator.standalone === true;
+            
+            if (!isStandalone) {
+                // Mostrar banner após 2 segundos
+                setTimeout(() => {
+                    const banner = document.getElementById('install-banner');
+                    if (banner && !localStorage.getItem('install-banner-dismissed')) {
+                        banner.style.display = 'block';
+                    }
+                }, 2000);
+            }
+            
+            // Detectar dispositivo para mensagem certa
+            const ua = navigator.userAgent;
+            const isAndroid = /android/i.test(ua);
+            const instructions = document.getElementById('install-instructions');
+            
+            if (instructions && isAndroid) {
+                instructions.innerHTML = '<strong>Android:</strong> Toque no menu <span style="background:rgba(0,212,255,0.2); padding: 1px 6px; border-radius: 4px;">⋮</span> → <strong>"Adicionar à tela inicial"</strong> ou <strong>"Instalar app"</strong>';
+            }
+            
+            // Lembrar quando usuário fecha o banner
+            const closeBtn = document.querySelector('#install-banner button');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    localStorage.setItem('install-banner-dismissed', Date.now());
+                });
+            }
+        })();
+
+    </script>
+<!-- v=1779550219 -->
+        <!-- Banner de instalação (some quando instalado) -->
+        <div id="install-banner" style="display: none; position: fixed; bottom: 16px; left: 16px; right: 16px; background: linear-gradient(135deg, #132f4c 0%, #173a5e 100%); color: white; padding: 14px 18px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); z-index: 1000; border: 1px solid #00d4ff; max-width: 500px; margin: 0 auto;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="font-size: 1.8em;">📱</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 700; font-size: 0.95em;">Instalar como App</div>
+                    <div style="font-size: 0.8em; opacity: 0.8; margin-top: 2px;">Acesso rápido na tela inicial</div>
+                </div>
+                <button onclick="document.getElementById('install-banner').style.display='none'" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;">×</button>
+            </div>
+            <div id="install-instructions" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.82em; line-height: 1.5;">
+                <strong>iPhone:</strong> Toque em <span style="background:rgba(0,212,255,0.2); padding: 1px 6px; border-radius: 4px;">⬆️ Compartilhar</span> → <strong>"Adicionar à Tela de Início"</strong>
+            </div>
+        </div>
+
+</body>
+</html>
