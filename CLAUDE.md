@@ -5,7 +5,7 @@ Este arquivo orienta o Claude Code sobre como trabalhar neste projeto.
 ## 🎯 Contexto do Projeto
 
 Dashboard PWA para monitorar o nível do Rio Negro em Manaus, feito para o
-Jean Savino (Head de Vendas Duty Cosméticos, mora em Manaus/AM). O app:
+o dono do projeto (profissional de vendas baseado em Manaus/AM). O app:
 - Acompanha cotas diárias **automaticamente** (scraper via GitHub Actions)
 - Compara anos (2024, 2025, 2026...)
 - É usado para planejar atividades no rio (jet ski, passeios)
