@@ -12,7 +12,7 @@ Uso:
     python3 scripts/scraper.py --verbose         # mostra detalhes de parsing
 
 Rodado automaticamente via GitHub Actions (.github/workflows/atualizar-dados.yml)
-de segunda a sexta às 8h (horário de Manaus).
+todos os dias às 8h (horário de Manaus).
 
 ⚠️ Sobre uso responsável:
 Este script faz UMA requisição por execução, roda no máximo 1x/dia em dias
@@ -170,13 +170,13 @@ def save_data_js(dados, timestamp_str):
         "//",
         f"// Última atualização: {timestamp_str}",
         "",
-        f'const ultimaVerificacao = "{timestamp_str}";', "", "const dados = {",
+        "const dados = {",
     ]
     for i, k in enumerate(chaves):
         valores_str = ",".join(str(v) for v in dados[k])
         virgula = "," if i < len(chaves) - 1 else ""
         linhas.append(f'    "{k}": [{valores_str}]{virgula}')
-    linhas.append("};")
+    linhas.append("};"); linhas.append(f'const ultimaAtualizacao = "{timestamp_str}";')
     linhas.append("")
     linhas.append("if (typeof module !== 'undefined' && module.exports) {")
     linhas.append("    module.exports = dados;")
