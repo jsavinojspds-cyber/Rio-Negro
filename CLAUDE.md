@@ -113,7 +113,7 @@ Se pedirem para consertar o scraper porque o site mudou:
 ## ⏰ A Automação (GitHub Actions)
 
 `.github/workflows/atualizar-dados.yml`:
-- Cron `0 12 * * 1-5` = seg-sex, 12:00 UTC = **8h em Manaus** (sem DST no Brasil)
+- Cron `0 12 * * *` = todos os dias, 12:00 UTC = **8h em Manaus** (sem DST no Brasil)
 - Roda o scraper, copia `src/index.html` e `src/data.js` para a raiz
   (GitHub Pages serve a partir de `/`), commita só se algo mudou
 - Precisa de "Read and write permissions" habilitado em
@@ -134,6 +134,7 @@ Ver `docs/AUTOMACAO.md` para o guia completo de setup.
 
 - Fonte: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto`
 - Tema exclusivamente dark (não implementar light theme sem pedir)
+- Valores de nível do rio sempre em metros: inclua o sufixo `m` (ex: `23.65 m`) em qualquer elemento novo que exiba uma cota
 
 ## 🔄 Fluxo de trabalho comum
 
