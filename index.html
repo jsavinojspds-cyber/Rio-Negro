@@ -864,7 +864,7 @@
         <div class="section">
             <div class="section-header">
                 <div class="section-title">Heatmap · Cota Média Mensal por Ano</div>
-                <span style="font-size: 0.8em; color: var(--text-secondary);">Cores: 🟦 baixo → 🟥 alto</span>
+                <span style="font-size: 0.8em; color: var(--text-secondary);">Cores: 🟥 seco → 🟦 cheio</span>
             </div>
             <div class="heatmap" id="heatmap"></div>
         </div>
@@ -888,7 +888,7 @@
                         <option value="11">Novembro</option>
                         <option value="12">Dezembro</option>
                     </select>
-                    <span style="font-size: 0.8em; color: var(--text-secondary);">🟦 baixo → 🟥 alto · ● hoje</span>
+                    <span style="font-size: 0.8em; color: var(--text-secondary);">🟥 seco → 🟦 cheio · ● hoje</span>
                 </div>
             </div>
             <div class="heatmap-maio-table-wrapper">
@@ -1513,7 +1513,7 @@
                         container.appendChild(criarCell('', 'heatmap-cell empty'));
                     } else {
                         const norm = (v - minV) / (maxV - minV);
-                        const cor = corHeatmap(norm);
+                        const cor = corHeatmap(1 - norm);
                         const cell = criarCell(v.toFixed(1), 'heatmap-cell');
                         cell.style.background = cor;
                         cell.title = `${ano}: ${v.toFixed(2)}m`;
@@ -1612,7 +1612,7 @@
                     if (d - 1 < arr.length) {
                         const v = arr[d - 1];
                         const norm = (v - minV) / range;
-                        const cor = corHeatmap(norm);
+                        const cor = corHeatmap(1 - norm);
                         
                         const isHoje = (ano === HOJE.ano && mesNum === HOJE.mes && d === HOJE.dia);
                         const className = isHoje ? 'hm-cell highlight' : 'hm-cell';
