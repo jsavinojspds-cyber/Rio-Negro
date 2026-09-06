@@ -1577,7 +1577,7 @@
             const tituloEl = document.getElementById('mes-titulo');
             if (tituloEl) tituloEl.textContent = nomesMeses[mesNum];
             
-            const totalDias = diasDoMes[mesNum];
+            const totalDias = diasDoMes[mesNum]; container.style.gridTemplateColumns = `70px repeat(${totalDias}, minmax(48px, 1fr))`;
             
             // ROW 1: Header com dias
             container.appendChild(criarCellMaio('Ano \\ Dia', 'hm-header'));
