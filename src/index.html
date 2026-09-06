@@ -1121,8 +1121,8 @@
             document.getElementById('gauge-stats').innerHTML = gaugeHtml;
             
             // --- Header / Footer ---
-            document.getElementById('header-data').textContent = dataFormatadaBarra;
-            document.getElementById('footer-data').textContent = dataFormatadaBarra;
+            document.getElementById('header-data').textContent = (typeof ultimaAtualizacao !== 'undefined') ? (() => { const [dp, hp] = ultimaAtualizacao.split(' '); const [ay, am, ad] = dp.split('-'); return `${ad}/${mesesNomes[parseInt(am)-1]}/${ay} às ${hp}`; })() : dataFormatadaBarra;
+            document.getElementById('footer-data').textContent = (typeof ultimaAtualizacao !== 'undefined') ? (() => { const [dp, hp] = ultimaAtualizacao.split(' '); const [ay, am, ad] = dp.split('-'); return `${ad}/${mesesNomes[parseInt(am)-1]}/${ay} às ${hp}`; })() : dataFormatadaBarra;
             
             // --- Insight dinâmico ---
             let insightTitulo, insightTexto;
