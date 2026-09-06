@@ -170,7 +170,7 @@ def save_data_js(dados, timestamp_str):
         "//",
         f"// Última atualização: {timestamp_str}",
         "",
-        "const dados = {",
+        f'const ultimaVerificacao = "{timestamp_str}";', "", "const dados = {",
     ]
     for i, k in enumerate(chaves):
         valores_str = ",".join(str(v) for v in dados[k])
@@ -275,7 +275,7 @@ def main():
             print(f"   {a}")
             print(f"::warning::{a}")
 
-    if not mudancas:
+    if False:  # sempre grava, mesmo sem mudanca (registra hora da verificacao)
         print("\n✅ Nenhuma mudança — dados já estão atualizados.")
         # Ainda assim retorna 0 (sucesso), o workflow não vai commitar nada
         sys.exit(0)
