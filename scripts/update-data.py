@@ -2,7 +2,7 @@
 """
 Atualização manual de dados do Rio Negro (uso de backup/emergência).
 
-Com a automação via GitHub Actions (scripts/scraper.py rodando de seg-sex
+Com a automação via GitHub Actions (scripts/scraper.py rodando todos os dias
 às 8h), este script normalmente NÃO é necessário. Use-o apenas se:
 - Quiser adicionar um dia específico rapidamente sem esperar o próximo scrape
 - O scraper automático falhar (mudança no site) e você precisar de um fallback manual
@@ -47,7 +47,7 @@ def save_dados(dados, timestamp_str):
         valores_str = ",".join(str(v) for v in dados[k])
         virgula = "," if i < len(chaves) - 1 else ""
         linhas.append(f'    "{k}": [{valores_str}]{virgula}')
-    linhas.append("};")
+    linhas.append("};"); linhas.append(f'const ultimaAtualizacao = "{timestamp_str}";')
     linhas.append("")
     linhas.append("if (typeof module !== 'undefined' && module.exports) {")
     linhas.append("    module.exports = dados;")
