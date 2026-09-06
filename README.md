@@ -1,7 +1,7 @@
 # 🌊 Rio Negro Dashboard · Manaus
 
 Dashboard interativo para monitoramento hidrométrico do Rio Negro no Porto
-de Manaus. **Atualiza sozinho, automaticamente, de segunda a sexta às 8h.**
+de Manaus. **Atualiza sozinho, automaticamente, todos os dias às 8h.**
 
 ## 📊 Funcionalidades
 
@@ -18,7 +18,7 @@ de Manaus. **Atualiza sozinho, automaticamente, de segunda a sexta às 8h.**
 ## 🤖 Automação
 
 ```
-GitHub Actions (seg-sex, 8h Manaus)
+GitHub Actions (todos os dias, 8h Manaus)
    → scraper.py busca portodemanaus.com.br
    → atualiza src/data.js
    → commit + push automático
@@ -84,10 +84,6 @@ bash scripts/deploy.sh "Update manual setembro"
 - **Deploy**: GitHub Pages
 - **PWA**: Manifest inline
 
-## 👤 Autor
 
-**Jean Savino** — Manaus/AM
-
----
 
 Feito com 💙 para monitoramento do Rio Negro
