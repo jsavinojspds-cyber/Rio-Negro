@@ -2,7 +2,7 @@
 // ⚠️ ARQUIVO GERADO AUTOMATICAMENTE pelo scraper (scripts/scraper.py)
 // Não editar manualmente — suas mudanças serão sobrescritas no próximo update
 //
-// Última atualização: 2026-09-08 11:41
+// Última atualização: 2026-09-08 12:38
 
 const dados = {
     "2023-04": [25.5,25.53,25.57,25.61,25.66,25.71,25.74,25.77,25.81,25.86,25.91,25.96,26.01,26.06,26.14,26.23,26.29,26.32,26.35,26.38,26.41,26.44,26.5,26.56,26.6,26.64,26.68,26.71,26.75,26.79],
@@ -40,7 +40,7 @@ const dados = {
     "2026-08": [27.35,27.27,27.19,27.15,27.09,27.03,26.95,26.88,26.82,26.77,26.67,26.49,26.41,26.33,26.22,26.11,25.99,25.89,25.79,25.67,25.56,25.44,25.32,25.19,25.07,24.93,24.79,24.65,24.51,24.35,24.19],
     "2026-09": [24.09,23.94,23.8,23.65,23.5,23.35,23.19,23.02]
 };
-const ultimaAtualizacao = "2026-09-08 11:41";
+const ultimaAtualizacao = "2026-09-08 12:38";
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = dados;
