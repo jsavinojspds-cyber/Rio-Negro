@@ -1292,6 +1292,11 @@
                 for (let m = 1; m <= 12; m++) {
                     const k = `${ano}-${String(m).padStart(2,'0')}`;
                     if (dados[k]) arr.push(...dados[k]);
+                    // Alinha por posição no ano usando 2024 (bissexto) como referência,
+                    // preenchendo com null os dias que não existem/ainda não aconteceram
+                    const diasNoMes = new Date(2024, m, 0).getDate();
+                    const valores = dados[k] || [];
+                    for (let d = valores.length; d < diasNoMes; d++) arr.push(null);
                 }
                 return arr;
             };
