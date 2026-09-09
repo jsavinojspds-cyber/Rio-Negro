@@ -982,8 +982,7 @@
                 <div class="insight-card">
                     <div class="insight-title">⚠️ Atenção</div>
                     <div class="insight-text">
-                        Setembro é o mês mais crítico para vazante — <strong>recordes de -27 cm/dia em 2024</strong>. Planeje navegação e logística considerando este período.
-                    </div>
+document.getElementById('insight-passeios-texto').innerHTML                    </div>
                 </div>
                 <div class="insight-card">
                     <div class="insight-title" id="insight-dinamico-titulo">📊 Situação Atual</div>
@@ -995,6 +994,12 @@
                     <div class="insight-title">🎯 Recomendação</div>
                     <div class="insight-text">
                         Para atividades aquáticas (jet ski, passeios), período <strong>Mai-Ago</strong> oferece melhores condições. Evite Out-Nov pelo nível baixo.
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-title">🏖️ Passeios e Cachoeiras</div>
+                    <div class="insight-text" id="insight-passeios-texto">
+                        Carregando…
                     </div>
                 </div>
             </div>
@@ -1144,6 +1149,47 @@
             }
             document.getElementById('insight-dinamico-titulo').textContent = insightTitulo;
             document.getElementById('insight-dinamico-texto').textContent = insightTexto;
+
+            const PASSEIOS = [
+                {nome: 'Cachoeira do Cuieiras (1ª queda)', tipo: 'ate', limite: 20},
+                {nome: 'Cachoeira do Tumbira', tipo: 'ate', limite: 20},
+                {nome: 'Ilha do Amor', tipo: 'ate', limite: 21},
+                {nome: 'Tupé', tipo: 'acima', limite: 21},
+                {nome: 'Cachoeira do Arara', tipo: 'ate', limite: 22},
+                {nome: 'Iluminado', tipo: 'ate', limite: 22},
+                {nome: 'Escondidinho', tipo: 'ate', limite: 23},
+                {nome: 'Cachoeira do Cuieiras (2ª queda)', tipo: 'acima', limite: 23},
+                {nome: 'Pau Rosa', tipo: 'acima', limite: 24},
+                {nome: 'Tarumã Mirim, Seixas e Peixaria Aldeia do Peixe', tipo: 'acima', limite: 25},
+                {nome: 'Cachoeira do Caniço', tipo: 'acima', limite: 26},
+                {nome: 'Cachoeira do Jacaré', tipo: 'acima', limite: 27},
+                {nome: 'Volta ao Mundo', tipo: 'acima', limite: 27},
+                {nome: 'Praia Grande, Vista do Lago, Janauacá', tipo: 'acima', limite: 28},
+                {nome: 'Praia da Sara', tipo: 'sempre', limite: null}
+            ];
+            const cotaP = ultimo.cota;
+            const abertosP = [];
+            const chegandoP = [];
+            const passouP = [];
+            PASSEIOS.forEach(p => {
+                if (p.tipo === 'sempre') { abertosP.push(p); return; }
+                if (p.tipo === 'ate') {
+                    if (cotaP <= p.limite) abertosP.push(p); else chegandoP.push({...p, diff: cotaP - p.limite});
+                } else {
+                    if (cotaP >= p.limite) abertosP.push(p); else passouP.push({...p, diff: p.limite - cotaP});
+                }
+            });
+            chegandoP.sort((a, b) => a.diff - b.diff);
+            passouP.sort((a, b) => a.diff - b.diff);
+            let passeiosTexto = '';
+            if (chegandoP.length && chegandoP[0].diff < 1) {
+                passeiosTexto += `⏳ Chegando: <strong>${chegandoP[0].nome}</strong> (faltam ${Math.round(chegandoP[0].diff*100)}cm). `;
+            }
+            if (passouP.length && passouP[0].diff < 1) {
+                passeiosTexto += `🚫 Encerrou: <strong>${passouP[0].nome}</strong> (há ${Math.round(passouP[0].diff*100)}cm). `;
+            }
+            passeiosTexto += `${abertosP.length} passeios/cachoeiras disponíveis agora.`;
+            document.getElementById('insight-passeios-texto').innerHTML = passeiosTexto;
         }
         
         renderKPIs();
