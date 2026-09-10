@@ -3,7 +3,7 @@
     "fonte": "Porto de Manaus",
     "url_original": "https://portodemanaus.com.br/nivel-do-rio-negro/",
     "unidade": "metros",
-    "ultima_atualizacao": "2026-09-10 08:00",
+    "ultima_atualizacao": "2026-09-10 11:30",
     "meses_totais": 34
   },
   "dados": {
@@ -1086,7 +1086,8 @@
       23.35,
       23.19,
       23.02,
-      22.84
+      22.84,
+      22.68
     ]
   }
 }
