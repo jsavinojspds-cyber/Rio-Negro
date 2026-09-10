@@ -983,8 +983,7 @@
                 <div class="insight-card">
                     <div class="insight-title">⚠️ Atenção</div>
                     <div class="insight-text">
-                        Setembro é o mês mais crítico para vazante — <strong>recordes de -27 cm/dia em 2024</strong>. Planeje navegação e logística considerando este período.
-                    </div>
+document.getElementById('insight-passeios-texto').innerHTML                    </div>
                 </div>
                 <div class="insight-card">
                     <div class="insight-title" id="insight-dinamico-titulo">📊 Situação Atual</div>
@@ -1292,11 +1291,6 @@
                 for (let m = 1; m <= 12; m++) {
                     const k = `${ano}-${String(m).padStart(2,'0')}`;
                     if (dados[k]) arr.push(...dados[k]);
-                    // Alinha por posição no ano usando 2024 (bissexto) como referência,
-                    // preenchendo com null os dias que não existem/ainda não aconteceram
-                    const diasNoMes = new Date(2024, m, 0).getDate();
-                    const valores = dados[k] || [];
-                    for (let d = valores.length; d < diasNoMes; d++) arr.push(null);
                 }
                 return arr;
             };
