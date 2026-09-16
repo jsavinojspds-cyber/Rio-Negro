@@ -1116,12 +1116,12 @@
             const cotaVs2024 = buscarMesmoDia(ultimo.ano - 2, ultimo.mes, ultimo.dia);
             let vsAnosHtml = '';
             if (cotaVs2025 !== null) {
-                const dVs25 = (ultimo.cota - cotaVs2025) * 100;
-                vsAnosHtml += `vs 2025: ${dVs25 >= 0 ? '+' : ''}${dVs25.toFixed(0)}cm &nbsp; `;
+                const dVs25 = (ultimo.cota - cotaVs2025);
+                vsAnosHtml += `vs 2025: ${dVs25 >= 0 ? '+' : ''}${dVs25.toFixed(2)}m &nbsp; `;
             }
             if (cotaVs2024 !== null) {
-                const dVs24 = (ultimo.cota - cotaVs2024) * 100;
-                vsAnosHtml += `vs 2024: ${dVs24 >= 0 ? '+' : ''}${dVs24.toFixed(0)}cm`;
+                const dVs24 = (ultimo.cota - cotaVs2024);
+                vsAnosHtml += `vs 2024: ${dVs24 >= 0 ? '+' : ''}${dVs24.toFixed(2)}m`;
             }
             document.getElementById('kpi-atual-vs-anos').innerHTML = vsAnosHtml || '—';
             
