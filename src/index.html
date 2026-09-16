@@ -746,6 +746,7 @@
                 <div class="kpi-value" id="kpi-atual">— m</div>
                 <div class="kpi-meta" id="kpi-atual-data">—</div>
                 <span class="kpi-trend" id="kpi-atual-trend">—</span>
+                <div class="kpi-meta" id="kpi-atual-vs-anos" style="margin-top:4px;">—</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-icon">🔝</div>
@@ -781,6 +782,20 @@
                 <div class="kpi-value" id="kpi-fase" style="font-size: 1.3em;">—</div>
                 <div class="kpi-meta" id="kpi-fase-meta">—</div>
                 <span class="kpi-trend" id="kpi-fase-trend">—</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon">📈</div>
+                <div class="kpi-label">Pico 2026</div>
+                <div class="kpi-value" id="kpi-pico-2026">— m</div>
+                <div class="kpi-meta" id="kpi-pico-2026-data">—</div>
+                <span class="kpi-trend trend-up">Máximo do ano</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon">📉</div>
+                <div class="kpi-label">Vazante Mínima 2025</div>
+                <div class="kpi-value" id="kpi-min-2025">— m</div>
+                <div class="kpi-meta" id="kpi-min-2025-data">—</div>
+                <span class="kpi-trend trend-down">Mínimo do ano</span>
             </div>
         </div>
         
@@ -1055,6 +1070,8 @@
         
         const dadosAnoCorrente = flatSeries.filter(p => p.ano === ultimo.ano);
         const picoAno = dadosAnoCorrente.reduce((max, p) => p.cota > max.cota ? p : max, dadosAnoCorrente[0]);
+        const dados2025 = flatSeries.filter(p => p.ano === 2025);
+        const minAno2025 = dados2025.length ? dados2025.reduce((min, p) => p.cota < min.cota ? p : min, dados2025[0]) : null;
         
         function renderKPIs() {
             const var24h = penultimo ? (ultimo.cota - penultimo.cota) * 100 : 0;
@@ -1089,6 +1106,24 @@
             document.getElementById('kpi-min-hist').textContent = minHist.cota.toFixed(2) + ' m';
             document.getElementById('kpi-min-hist-data').textContent = `${mesesNomes[minHist.mes-1]}/${minHist.ano}`;
             document.getElementById('kpi-amplitude').textContent = (picoHist.cota - minHist.cota).toFixed(2) + ' m';
+            document.getElementById('kpi-pico-2026').textContent = picoAno.cota.toFixed(2) + ' m';
+            document.getElementById('kpi-pico-2026-data').textContent = `${mesesNomes[picoAno.mes-1]}/${picoAno.ano}`;
+            if (minAno2025) {
+                document.getElementById('kpi-min-2025').textContent = minAno2025.cota.toFixed(2) + ' m';
+                document.getElementById('kpi-min-2025-data').textContent = `${mesesNomes[minAno2025.mes-1]}/${minAno2025.ano}`;
+            }
+            const cotaVs2025 = buscarMesmoDia(ultimo.ano - 1, ultimo.mes, ultimo.dia);
+            const cotaVs2024 = buscarMesmoDia(ultimo.ano - 2, ultimo.mes, ultimo.dia);
+            let vsAnosHtml = '';
+            if (cotaVs2025 !== null) {
+                const dVs25 = (ultimo.cota - cotaVs2025);
+                vsAnosHtml += `vs 2025: ${dVs25 >= 0 ? '+' : ''}${dVs25.toFixed(2)}m &nbsp; `;
+            }
+            if (cotaVs2024 !== null) {
+                const dVs24 = (ultimo.cota - cotaVs2024);
+                vsAnosHtml += `vs 2024: ${dVs24 >= 0 ? '+' : ''}${dVs24.toFixed(2)}m`;
+            }
+            document.getElementById('kpi-atual-vs-anos').innerHTML = vsAnosHtml || '—';
             
             // --- KPI: Tendência 7 dias ---
             document.getElementById('kpi-tendencia').textContent = (var7d >= 0 ? '+' : '') + var7d.toFixed(0) + ' cm';
