@@ -824,8 +824,7 @@
                         <div class="gauge-marks">
                             <span>30m</span>
                             <span>25m</span>
-                            <span>20m</span>
-                            <span>15m</span>
+                        <span>15m</span>
                             <span>10m</span>
                         </div>
                     </div>
@@ -848,6 +847,8 @@
                     <button class="filter-btn active" data-year-filter="all">2024 · 2025 · 2026</button>
                     <button class="filter-btn" data-year-filter="2425">2024 vs 2025</button>
                     <button class="filter-btn" data-year-filter="2526">2025 vs 2026</button>
+                    <button class="filter-btn" data-year-filter="2426">2024 vs 2026</button>
+                    <span id="comparacao-diferenca" style="display:none;margin-left:12px;padding:4px 10px;border-radius:6px;font-weight:600;font-size:0.85em;"></span>
                 </div>
             </div>
             <div class="chart-container chart-container-tall">
@@ -1348,7 +1349,7 @@
             });
             
             const datasets = [];
-            if (filtro === 'all' || filtro === '2425') {
+            if (filtro === 'all' || filtro === '2425' || filtro === '2426') {
                 datasets.push({
                     label: '2024',
                     data: d2024,
@@ -1370,7 +1371,7 @@
                     pointRadius: 0,
                 });
             }
-            if (filtro === 'all' || filtro === '2526') {
+            if (filtro === 'all' || filtro === '2526' || filtro === '2426') {
                 datasets.push({
                     label: '2026',
                     data: d2026,
@@ -1381,6 +1382,29 @@
                     pointRadius: 0,
                     borderDash: filtro === 'all' ? [] : [],
                 });
+            }
+            
+            const diffEl = document.getElementById('comparacao-diferenca');
+            if (filtro === '2425' || filtro === '2526' || filtro === '2426') {
+                let idxHoje = d2026.length - 1;
+                while (idxHoje >= 0 && d2026[idxHoje] === null) idxHoje--;
+                let anoA, anoB, dadosA, dadosB;
+                if (filtro === '2425') { anoA = 2024; anoB = 2025; dadosA = d2024; dadosB = d2025; }
+                else if (filtro === '2526') { anoA = 2025; anoB = 2026; dadosA = d2025; dadosB = d2026; }
+                else { anoA = 2024; anoB = 2026; dadosA = d2024; dadosB = d2026; }
+                const valA = idxHoje >= 0 ? dadosA[idxHoje] : null;
+                const valB = idxHoje >= 0 ? dadosB[idxHoje] : null;
+                if (valA !== null && valB !== null) {
+                    const diff = valB - valA;
+                    diffEl.style.display = 'inline-block';
+                    diffEl.textContent = `${labels[idxHoje]}: ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}m (${anoB} vs ${anoA})`;
+                    diffEl.style.color = diff >= 0 ? 'var(--success)' : 'var(--danger)';
+                    diffEl.style.background = diff >= 0 ? 'rgba(76,175,80,0.15)' : 'rgba(244,67,54,0.15)';
+                } else {
+                    diffEl.style.display = 'none';
+                }
+            } else {
+                diffEl.style.display = 'none';
             }
             
             if (chartComparacao) chartComparacao.destroy();
