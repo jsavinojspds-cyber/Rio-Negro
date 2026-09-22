@@ -718,7 +718,7 @@
                 }
         }
         @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .live-indicator button { display: none !important; }
             #install-banner { display: none !important; }
             .kpi-card, .insight-card, .chart-container { break-inside: avoid; }
