@@ -1242,7 +1242,7 @@
             if (passouP.length && passouP[0].diff < 1) {
                 passeiosTexto += `🚫 Encerrou: <strong>${passouP[0].nome}</strong> (há ${Math.round(passouP[0].diff*100)}cm). `;
             }
-            passeiosTexto += `${abertosP.length} passeios/cachoeiras disponíveis agora.`;
+            passeiosTexto += `${abertosP.length} passeios/cachoeiras disponíveis agora: <strong>${abertosP.map(p => p.nome).join(', ')}</strong>.`;
             document.getElementById('insight-passeios-texto').innerHTML = passeiosTexto;
         }
         
