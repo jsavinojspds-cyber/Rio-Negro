@@ -800,6 +800,13 @@
         </nav>
 
         <div class="tab-panel" id="aba-geral" role="tabpanel" aria-labelledby="tab-geral">
+        <!-- RESPOSTA DIRETA: quando para de descer / enche -->
+        <div class="section" id="resposta-secao" style="border-left:4px solid var(--accent);">
+            <div class="section-header">
+                <div class="section-title">O que vem pela frente</div>
+            </div>
+            <div id="resposta-direta" style="font-size:1em; line-height:1.8;"></div>
+        </div>
         <!-- KPIs (preenchidos dinamicamente via JS a partir de data.js) -->
         <div class="kpi-grid">
             <div class="kpi-card">
@@ -1813,6 +1820,73 @@
             if (rec.length) html += "<br>📍 <strong>Picos recentes (app):</strong> " + rec.join(" · ");
             html += "<br><span style='opacity:0.6;font-size:0.85em;'>Base: série oficial da ANA/SGB (estação 14990000, 1902-2014) mais os dados do app (2023-2026); o período 2015-2023 é estimado a partir da estação de Manacapuru (erro típico de uns 40 cm). O clima mudou nas últimas décadas: use como referência de época, não como previsão exata.</span>";
             el.innerHTML = html;
+
+            // ---- Resposta direta (topo da aba Visão geral) ----
+            const R = document.getElementById("resposta-direta");
+            if (R) {
+                const hj = hojeN();
+                const fm = (n) => U.fmtN(n);
+                const mediaOf = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+                let out = "";
+                let fundoNivel = null, fundoN = null, fnLo = null, fnHi = null, nvLo = null, nvHi = null, subeN = null, subeLo = null, subeHi = null;
+                if (emEnchente) { fundoNivel = tr0.c; fundoN = tr0.n; }
+                else if (A && A.anos.length >= 5) {
+                    const niv = [], ks = [], k5 = [];
+                    A.anos.forEach(a => {
+                        const arr = A.arrs[a]; let mn = null, k0 = 0;
+                        arr.forEach((c, k) => { if (c !== null && k <= 200 && (mn === null || c < mn)) { mn = c; k0 = k; } });
+                        if (mn === null) return;
+                        niv.push(mn); ks.push(k0);
+                        for (let k = k0; k < arr.length; k++) { if (arr[k] !== null && arr[k] >= mn + 0.5) { k5.push(k); break; } }
+                    });
+                    fundoNivel = quant(niv, 0.5); nvLo = quant(niv, 0.1); nvHi = quant(niv, 0.9);
+                    fundoN = A.hoje + Math.round(quant(ks, 0.5)); fnLo = A.hoje + Math.round(quant(ks, 0.1)); fnHi = A.hoje + Math.round(quant(ks, 0.9));
+                    if (k5.length >= 5) { subeN = A.hoje + Math.round(quant(k5, 0.5)); subeLo = A.hoje + Math.round(quant(k5, 0.1)); subeHi = A.hoje + Math.round(quant(k5, 0.9)); }
+                }
+                // sinal da cabeceira (Manacapuru, últimos 7 dias)
+                let sinal = "";
+                try {
+                    if (typeof cabeceira !== "undefined" && cabeceira.manacapuru) {
+                        const d = cabeceira.manacapuru.dias, u = d[d.length - 1], p = d[Math.max(0, d.length - 8)];
+                        const s7 = (u[1] - p[1]) / 7;
+                        if (s7 > 0.03) sinal = "Manacapuru (Solimões) já está subindo: sinal de que o fundo passou ou está passando.";
+                        else if (s7 >= -0.03) sinal = "Manacapuru (Solimões) está estável: o fundo está perto.";
+                        else sinal = "Manacapuru (Solimões) ainda cai (" + Math.abs(s7 * 100).toFixed(0) + " cm/dia): o rio segue descendo.";
+                    }
+                } catch (e) {}
+                // pico: histórico condicionado ao fundo (regressão), se houver relação
+                const py = ultimo.mes >= 7 ? ultimo.ano + 1 : ultimo.ano;
+                let picoNiv = quant(picos.map(p => p.c), 0.5), picoLo = quant(picos.map(p => p.c), 0.1), picoHi = quant(picos.map(p => p.c), 0.9), cond = false;
+                const pares = [];
+                fundos.forEach(f => { const pk = picos.find(p => p.ano === f.ano + 1); if (pk) pares.push([f.c, pk.c]); });
+                if (pares.length >= 30 && fundoNivel !== null) {
+                    const mx = mediaOf(pares.map(p => p[0])), my = mediaOf(pares.map(p => p[1]));
+                    let sxy = 0, sxx = 0, syy = 0;
+                    pares.forEach(p => { sxy += (p[0] - mx) * (p[1] - my); sxx += (p[0] - mx) * (p[0] - mx); syy += (p[1] - my) * (p[1] - my); });
+                    const r = sxy / Math.sqrt(sxx * syy);
+                    window.RIO_PICO_R = r;
+                    if (Math.abs(r) >= 0.3) {
+                        const b = sxy / sxx, a0 = my - b * mx;
+                        const res = pares.map(p => p[1] - (a0 + b * p[0]));
+                        const sd = Math.sqrt(res.reduce((x, y) => x + y * y, 0) / (pares.length - 2));
+                        picoNiv = a0 + b * fundoNivel; picoLo = picoNiv - 1.28 * sd; picoHi = picoNiv + 1.28 * sd; cond = true;
+                    }
+                }
+                const picoN = dn(py, 1, 1) + Math.round(quant(pd, 0.5));
+                const picoNLo = dn(py, 1, 1) + Math.round(quant(pd, 0.1)), picoNHi = dn(py, 1, 1) + Math.round(quant(pd, 0.9));
+                if (emEnchente) {
+                    out += "<div>⬇️ <b>A descida já acabou.</b> O fundo foi <b>" + fundoNivel.toFixed(2) + " m</b> em " + fm(fundoN) + ".</div>";
+                    out += "<div>⬆️ <b>O rio está subindo:</b> +" + (ultimo.cota - fundoNivel).toFixed(2) + " m em " + (hj - fundoN) + " dias.</div>";
+                } else if (fundoN !== null) {
+                    const falta = fundoN - hj;
+                    out += "<div>⬇️ <b>Para de descer por volta de " + fm(fundoN) + "</b>" + (falta > 0 ? " (daqui a ~" + falta + " dias)" : "") + ", perto de <b>" + fundoNivel.toFixed(1) + " m</b>. Em 80% dos casos, entre " + fm(fnLo) + " e " + fm(fnHi) + ", com o fundo entre " + nvLo.toFixed(1) + " e " + nvHi.toFixed(1) + " m.</div>";
+                    if (subeN !== null) out += "<div>⬆️ <b>Começa a encher por volta de " + fm(subeN) + "</b> (50 cm acima do fundo; entre " + fm(subeLo) + " e " + fm(subeHi) + ").</div>";
+                }
+                out += "<div>🏔️ <b>Cheia (pico) por volta de " + fm(picoN) + "</b>, perto de <b>" + picoNiv.toFixed(1) + " m</b> (80% dos casos: " + picoLo.toFixed(1) + " a " + picoHi.toFixed(1) + " m; data entre " + fm(picoNLo) + " e " + fm(picoNHi) + ").</div>";
+                if (sinal) out += "<div style='margin-top:6px;'>📡 " + sinal + "</div>";
+                out += "<div style='opacity:0.6;font-size:0.8em;margin-top:6px;'>Estimativa por anos parecidos" + (cond ? " e pela relação entre o fundo e a cheia seguinte" : "") + ". Detalhes e margens abaixo e na aba Passeios.</div>";
+                R.innerHTML = out;
+            }
         })();
 
         // ============= CALENDÁRIO DE PASSEIOS =============
