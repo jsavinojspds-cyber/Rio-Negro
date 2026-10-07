@@ -800,13 +800,6 @@
         </nav>
 
         <div class="tab-panel" id="aba-geral" role="tabpanel" aria-labelledby="tab-geral">
-        <!-- RESPOSTA DIRETA: quando para de descer / enche -->
-        <div class="section" id="resposta-secao" style="border-left:4px solid var(--accent);">
-            <div class="section-header">
-                <div class="section-title">O que vem pela frente</div>
-            </div>
-            <div id="resposta-direta" style="font-size:1em; line-height:1.8;"></div>
-        </div>
         <!-- KPIs (preenchidos dinamicamente via JS a partir de data.js) -->
         <div class="kpi-grid">
             <div class="kpi-card">
@@ -817,6 +810,15 @@
                 <span class="kpi-trend" id="kpi-atual-trend">—</span>
                 <div class="kpi-meta" id="kpi-atual-vs-anos" style="margin-top:4px;">—</div>
             </div>
+        </div>
+        <!-- RESPOSTA DIRETA: quando para de descer / enche -->
+        <div class="section" id="resposta-secao" style="border-left:4px solid var(--accent);">
+            <div class="section-header">
+                <div class="section-title">O que vem pela frente</div>
+            </div>
+            <div id="resposta-direta" style="font-size:1em; line-height:1.8;"></div>
+        </div>
+        <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-icon">🔝</div>
                 <div class="kpi-label">Pico Histórico</div>
