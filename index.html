@@ -53,6 +53,40 @@
         
         .container { max-width: 1600px; margin: 0 auto; }
         
+
+        /* ABAS */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            margin: 0 0 20px;
+            padding: 0 4px;
+            background: rgba(10, 25, 41, 0.92);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+        }
+        .tab-btn {
+            appearance: none;
+            background: none;
+            border: 0;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+            padding: 14px 18px 11px;
+            min-height: 48px;
+            font: inherit;
+            font-size: 1em;
+            font-weight: 600;
+            color: #90a4ae;
+            cursor: pointer;
+        }
+        .tab-btn:hover { color: #e3f2fd; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: 6px; }
+        .tab-panel[hidden] { display: none; }
+
         /* HEADER */
         .header {
             background: linear-gradient(135deg, #132f4c 0%, #173a5e 100%);
@@ -726,6 +760,8 @@
             .live-indicator button { display: none !important; }
             #install-banner { display: none !important; }
             .kpi-card, .insight-card, .chart-container { break-inside: avoid; }
+            .tabs { display: none !important; }
+            .tab-panel[hidden] { display: block !important; }
         }
     </style>
 </head>
@@ -749,6 +785,13 @@
             </div>
         </div>
         
+        <!-- ABAS -->
+        <nav class="tabs" role="tablist" aria-label="Seções do painel">
+            <button class="tab-btn active" role="tab" id="tab-geral" aria-controls="aba-geral" aria-selected="true" data-tab="geral">Visão geral</button>
+            <button class="tab-btn" role="tab" id="tab-passeios" aria-controls="aba-passeios" aria-selected="false" data-tab="passeios" tabindex="-1">Passeios</button>
+        </nav>
+
+        <div class="tab-panel" id="aba-geral" role="tabpanel" aria-labelledby="tab-geral">
         <!-- KPIs (preenchidos dinamicamente via JS a partir de data.js) -->
         <div class="kpi-grid">
             <div class="kpi-card">
@@ -795,13 +838,6 @@
                 <span class="kpi-trend" id="kpi-fase-trend">—</span>
             </div>
             <div class="kpi-card">
-                <div class="kpi-icon">📈</div>
-                <div class="kpi-label">Pico 2026</div>
-                <div class="kpi-value" id="kpi-pico-2026">— m</div>
-                <div class="kpi-meta" id="kpi-pico-2026-data">—</div>
-                <span class="kpi-trend trend-up">Máximo do ano</span>
-            </div>
-            <div class="kpi-card">
                 <div class="kpi-icon">📉</div>
                 <div class="kpi-label">Vazante Mínima 2025</div>
                 <div class="kpi-value" id="kpi-min-2025">— m</div>
@@ -843,9 +879,6 @@
                     <div class="gauge-info">
                         <h3>Nível atual</h3>
                         <div class="gauge-current" id="gauge-current">—</div>
-                        <div class="gauge-stats" id="gauge-stats">
-                            <div>Carregando…</div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -868,17 +901,8 @@
             </div>
         </div>
         
-        <!-- GRID 2 GRÁFICOS -->
-        <div class="grid-2">
-            <div class="section">
-                <div class="section-header">
-                    <div class="section-title">Cota Média Mensal</div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chartMensal"></canvas>
-                </div>
-            </div>
-            
+        <!-- VELOCIDADE -->
+        <div>
             <div class="section">
                 <div class="section-header">
                     <div class="section-title">Velocidade de Variação (cm/dia)</div>
@@ -889,26 +913,6 @@
             </div>
         </div>
         
-        <!-- PROJEÇÃO POR ANÁLOGOS -->
-        <div class="section">
-            <div class="section-header">
-                <div class="section-title">Projeção por Anos Parecidos</div>
-            </div>
-            <div class="chart-container">
-                <canvas id="chartProjecao"></canvas>
-            </div>
-            <div id="projecao-texto" style="margin-top: 14px; font-size: 0.9em; line-height: 1.7;"></div>
-        </div>
-
-        <!-- SEMÁFORO SEMANAL -->
-        <div class="section">
-            <div class="section-header">
-                <div class="section-title">Semáforo Semanal dos Passeios · Próximas 20 Semanas</div>
-            </div>
-            <div id="semaforo-passeios" style="overflow-x: auto;"></div>
-            <div id="semaforo-legenda" style="margin-top: 10px; font-size: 0.8em; color: var(--text-secondary); line-height: 1.6;"></div>
-        </div>
-
         <!-- CABECEIRA DO SOLIMÕES -->
         <div class="section" id="cabeceira-secao">
             <div class="section-header">
@@ -926,16 +930,6 @@
                 <div class="section-title">Próxima Enchente · Fundo e Pico Esperados</div>
             </div>
             <div id="enchente-texto" style="font-size: 0.92em; line-height: 1.75;"></div>
-        </div>
-
-        <!-- CALENDÁRIO DE PASSEIOS -->
-        <div class="section">
-            <div class="section-header">
-                <div class="section-title">Calendário de Passeios · Meses Acessíveis</div>
-                <div class="filter-group" id="calendario-anos"></div>
-            </div>
-            <div id="calendario-passeios" style="overflow-x: auto;"></div>
-            <div style="margin-top: 10px; font-size: 0.8em; color: var(--text-secondary);">🟩 acessível o mês todo · 🟨 parte do mês (% dos dias) · 🟥 inacessível · cinza: sem dados ainda</div>
         </div>
 
         <!-- HEATMAP MENSAL -->
@@ -1013,19 +1007,9 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>🔝 Cheia máxima</td>
-                            <td>05-08 Jul 2025</td>
-                            <td><strong>29.05 m</strong></td>
-                        </tr>
-                        <tr>
                             <td>🔝 Cheia 2024</td>
                             <td>16-22 Jun 2024</td>
                             <td><strong>26.85 m</strong></td>
-                        </tr>
-                        <tr>
-                            <td>🔻 Seca histórica</td>
-                            <td>09-12 Out 2024</td>
-                            <td><strong>12.11 m</strong></td>
                         </tr>
                         <tr>
                             <td>⚡ Maior subida 24h</td>
@@ -1052,44 +1036,61 @@
             <div class="section-title" style="margin-bottom: 16px;">Insights Operacionais</div>
             <div class="insights-grid">
                 <div class="insight-card">
-                    <div class="insight-title">📅 Sazonalidade</div>
-                    <div class="insight-text">
-                        O ciclo do Rio Negro segue um padrão claro: <strong>enchente de Dez a Jun</strong>, <strong>pico em Jun-Jul</strong>, <strong>vazante de Jul a Out</strong>, <strong>fundo em Out-Nov</strong>.
-                    </div>
-                </div>
-                <div class="insight-card">
-                    <div class="insight-title">⚠️ Atenção</div>
-                    <div class="insight-text">
-                        Setembro é o mês mais crítico para vazante — <strong>recordes de -27 cm/dia em 2024</strong>. Planeje navegação e logística considerando este período.
-                    </div>
-                </div>
-                <div class="insight-card">
                     <div class="insight-title" id="insight-dinamico-titulo">📊 Situação Atual</div>
                     <div class="insight-text" id="insight-dinamico-texto">
                         Carregando análise…
                     </div>
                 </div>
-                <div class="insight-card">
-                    <div class="insight-title">🎯 Recomendação</div>
-                    <div class="insight-text">
-                        Para atividades aquáticas (jet ski, passeios), período <strong>Mai-Ago</strong> oferece melhores condições. Evite Out-Nov pelo nível baixo.
-                    </div>
-                </div>
+            </div>
+        </div>
+        
+        </div><!-- /aba-geral -->
+
+        <div class="tab-panel" id="aba-passeios" role="tabpanel" aria-labelledby="tab-passeios" hidden>
+            <div class="section" id="passeios-resumo-secao">
+                <div class="section-title" style="margin-bottom: 12px;">Passeios hoje</div>
+                <div class="insights-grid">
                 <div class="insight-card">
                     <div class="insight-title">🏖️ Passeios e Cachoeiras</div>
                     <div class="insight-text" id="insight-passeios-texto">
                         Carregando…
                     </div>
                 </div>
-                <div class="insight-card">
-                    <div class="insight-title">🗺️ Todos os Passeios Monitorados</div>
-                    <div class="insight-text" style="font-size:0.85em;line-height:1.6;">
-                        <strong>Até 20m:</strong> Tumbira · <strong>Até 21m:</strong> Ilha do Amor · <strong>Acima 21m:</strong> Tupé · <strong>Até 22m:</strong> Arara, Iluminado · <strong>Acima 23m:</strong> Cuieiras 2ª queda · <strong>Acima 24m:</strong> Pau Rosa · <strong>Acima 25m:</strong> Tarumã Mirim, Seixas, Peixaria · <strong>Acima 26m:</strong> Caniço · <strong>Acima 27m:</strong> Jacaré, Volta ao Mundo · <strong>Acima 28m:</strong> Praia Grande, Vista do Lago, Janauacá · <strong>Ano todo:</strong> Praia da Sara
-                    </div>
                 </div>
             </div>
+
+        <!-- PROJEÇÃO POR ANÁLOGOS -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Projeção por Anos Parecidos</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartProjecao"></canvas>
+            </div>
+            <div id="projecao-texto" style="margin-top: 14px; font-size: 0.9em; line-height: 1.7;"></div>
         </div>
-        
+
+        <!-- SEMÁFORO SEMANAL -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Semáforo Semanal dos Passeios · Próximas 20 Semanas</div>
+            </div>
+            <div id="semaforo-passeios" style="overflow-x: auto;"></div>
+            <div id="semaforo-legenda" style="margin-top: 10px; font-size: 0.8em; color: var(--text-secondary); line-height: 1.6;"></div>
+        </div>
+
+        <!-- CALENDÁRIO DE PASSEIOS -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Calendário de Passeios · Meses Acessíveis</div>
+                <div class="filter-group" id="calendario-anos"></div>
+            </div>
+            <div id="calendario-passeios" style="overflow-x: auto;"></div>
+            <div style="margin-top: 10px; font-size: 0.8em; color: var(--text-secondary);">🟩 acessível o mês todo · 🟨 parte do mês (% dos dias) · 🟥 inacessível · cinza: sem dados ainda</div>
+        </div>
+
+        </div><!-- /aba-passeios -->
+
         <div class="footer">
             Dashboard · Dados: Porto de Manaus · Atualizado em <span id="footer-data">—</span> · <span style="opacity:0.5">v2026.09.09-2</span><br><span style="opacity:0.4;font-size:0.85em;">© 2026 jsavino · Todos os direitos reservados</span>
         </div>
@@ -1175,8 +1176,6 @@
             document.getElementById('kpi-min-hist').textContent = minHist.cota.toFixed(2) + ' m';
             document.getElementById('kpi-min-hist-data').textContent = `${mesesNomes[minHist.mes-1]}/${minHist.ano}`;
             document.getElementById('kpi-amplitude').textContent = (picoHist.cota - minHist.cota).toFixed(2) + ' m';
-            document.getElementById('kpi-pico-2026').textContent = picoAno.cota.toFixed(2) + ' m';
-            document.getElementById('kpi-pico-2026-data').textContent = `${mesesNomes[picoAno.mes-1]}/${picoAno.ano}`;
             if (minAno2025) {
                 document.getElementById('kpi-min-2025').textContent = minAno2025.cota.toFixed(2) + ' m';
                 document.getElementById('kpi-min-2025-data').textContent = `${mesesNomes[minAno2025.mes-1]}/${minAno2025.ano}`;
@@ -1219,17 +1218,6 @@
             const cotaDoisAnosAnt = buscarMesmoDia(ultimo.ano - 2, ultimo.mes, ultimo.dia);
             const diffAnoAnt = cotaAnoAnt !== null ? (ultimo.cota - cotaAnoAnt) * 100 : null;
             const diffDoisAnosAnt = cotaDoisAnosAnt !== null ? (ultimo.cota - cotaDoisAnosAnt) * 100 : null;
-            
-            let gaugeHtml = `<div>Status <strong>${fase}</strong></div>`;
-            gaugeHtml += `<div>Variação 24h <strong style="color: ${var24h >= 0 ? 'var(--success)' : 'var(--danger)'};">${var24h >= 0 ? '+' : ''}${var24h.toFixed(0)} cm</strong></div>`;
-            gaugeHtml += `<div>Pico ${ultimo.ano} <strong>${picoAno.cota.toFixed(2)}m (${mesesNomes[picoAno.mes-1]})</strong></div>`;
-            if (diffAnoAnt !== null) {
-                gaugeHtml += `<div>vs ${mesesNomes[ultimo.mes-1]}/${ultimo.ano-1} <strong style="color: ${diffAnoAnt >= 0 ? 'var(--success)' : 'var(--danger)'};">${diffAnoAnt >= 0 ? '+' : ''}${diffAnoAnt.toFixed(0)} cm</strong></div>`;
-            }
-            if (diffDoisAnosAnt !== null) {
-                gaugeHtml += `<div>vs ${mesesNomes[ultimo.mes-1]}/${ultimo.ano-2} <strong style="color: ${diffDoisAnosAnt >= 0 ? 'var(--success)' : 'var(--danger)'};">${diffDoisAnosAnt >= 0 ? '+' : ''}${diffDoisAnosAnt.toFixed(0)} cm</strong></div>`;
-            }
-            document.getElementById('gauge-stats').innerHTML = gaugeHtml;
             
             // --- Header / Footer ---
             document.getElementById('header-data').textContent = (typeof ultimaAtualizacao !== 'undefined') ? (() => { const [dp, hp] = ultimaAtualizacao.split(' '); const [ay, am, ad] = dp.split('-'); return `${ad}/${mesesNomes[parseInt(am)-1]}/${ay} às ${hp}`; })() : dataFormatadaBarra;
@@ -1304,34 +1292,6 @@
             }
             passeiosTexto += `${abertosP.length} passeios/cachoeiras disponíveis agora: <strong>${abertosP.map(p => p.nome).join(', ')}</strong>.`;
             // Previsão de abertura/fechamento (extrapolação linear do ritmo recente)
-            const taxaDia = (n) => flatSeries.length > n ? (ultimo.cota - flatSeries[flatSeries.length - 1 - n].cota) / n : 0;
-            const taxasP = [taxaDia(3), taxaDia(7), taxaDia(14)];
-            const fmtDataP = (d) => { const dt = new Date(ultimo.ano, ultimo.mes - 1, ultimo.dia + Math.round(d)); return String(dt.getDate()).padStart(2, "0") + "/" + String(dt.getMonth() + 1).padStart(2, "0"); };
-            const previsoesP = [];
-            PASSEIOS.forEach(p => {
-                if (p.tipo === "sempre") return;
-                const abertoP = p.tipo === "ate" ? cotaP <= p.limite : cotaP >= p.limite;
-                const distP = p.limite - cotaP;
-                const diasP = taxasP.map(tx => (tx !== 0 && (distP / tx) > 0) ? distP / tx : null);
-                const centralP = diasP[1];
-                if (centralP === null || centralP > 45) return;
-                const validosP = diasP.filter(d => d !== null);
-                previsoesP.push({ nome: p.nome, acao: abertoP ? "fecha" : "abre", central: centralP, min: Math.min(...validosP), max: Math.max(...validosP) });
-            });
-            previsoesP.sort((a, b) => a.central - b.central);
-            if (previsoesP.length) {
-                passeiosTexto += "<br><br>📅 <strong>Previsão pelo ritmo atual (" + (taxasP[1] * 100).toFixed(0) + " cm/dia):</strong>";
-                previsoesP.slice(0, 6).forEach(pv => {
-                    const dc = Math.round(pv.central);
-                    const quando = dc < 1 ? "em menos de 1 dia" : "em ~" + dc + (dc === 1 ? " dia" : " dias");
-                    const faixa = Math.round(pv.min) === Math.round(pv.max) ? fmtDataP(pv.central) : fmtDataP(pv.min) + " a " + fmtDataP(pv.max);
-                    passeiosTexto += "<br>• " + pv.nome + " <strong>" + pv.acao + "</strong> " + quando + " (" + faixa + ")";
-                });
-                passeiosTexto += "<br><span style=\"opacity:0.6;font-size:0.85em;\">Estimativa linear: a vazante costuma desacelerar perto do fim, então use como referência.</span>";
-            }
-            else {
-                passeiosTexto += "<br><br>📅 <span style=\"opacity:0.8;\">Nenhum passeio muda de status nos próximos 45 dias no ritmo atual.</span>";
-            }
             document.getElementById('insight-passeios-texto').innerHTML = passeiosTexto;
         }
         
@@ -1882,6 +1842,43 @@
             renderCal(anosCal[anosCal.length - 1]);
         })();
 
+
+        // ============= ABAS =============
+        (function () {
+            const botoes = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
+            const painel = { geral: document.getElementById("aba-geral"), passeios: document.getElementById("aba-passeios") };
+            if (!botoes.length || !painel.geral || !painel.passeios) return;
+            function ativar(nome, focar) {
+                if (!painel[nome]) nome = "geral";
+                botoes.forEach(function (b) {
+                    const on = b.getAttribute("data-tab") === nome;
+                    b.classList.toggle("active", on);
+                    b.setAttribute("aria-selected", on ? "true" : "false");
+                    b.tabIndex = on ? 0 : -1;
+                    if (on && focar) b.focus();
+                });
+                Object.keys(painel).forEach(function (k) { painel[k].hidden = (k !== nome); });
+                try { localStorage.setItem("rio-aba", nome); } catch (e) {}
+                if (history.replaceState) { try { history.replaceState(null, "", nome === "geral" ? location.pathname + location.search : "#" + nome); } catch (e) {} }
+                if (window.Chart && Chart.instances) { Object.keys(Chart.instances).forEach(function (id) { try { Chart.instances[id].resize(); } catch (e) {} }); }
+                window.scrollTo(0, 0);
+            }
+            botoes.forEach(function (b, i) {
+                b.addEventListener("click", function () { ativar(b.getAttribute("data-tab")); });
+                b.addEventListener("keydown", function (ev) {
+                    if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") {
+                        const alvo = botoes[(i + (ev.key === "ArrowRight" ? 1 : botoes.length - 1)) % botoes.length];
+                        ativar(alvo.getAttribute("data-tab"), true);
+                    }
+                });
+            });
+            let inicial = "geral";
+            if (location.hash === "#passeios") inicial = "passeios";
+            else if (location.hash === "") { try { inicial = localStorage.getItem("rio-aba") || "geral"; } catch (e) {} }
+            if (inicial !== "geral") ativar(inicial);
+        })();
+
+
         // ============= GRÁFICO MENSAL =============
         function mediaMensal(ano) {
             const arr = [];
@@ -1896,70 +1893,6 @@
             return arr.map(v => v === null ? null : parseFloat(v.toFixed(2)));
         }
         
-        new Chart(document.getElementById('chartMensal').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: mesesNomes,
-                datasets: [
-                    {
-                        label: '2024',
-                        data: mediaMensal('2024'),
-                        borderColor: '#90caf9',
-                        backgroundColor: 'rgba(144, 202, 249, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#90caf9',
-                    },
-                    {
-                        label: '2025',
-                        data: mediaMensal('2025'),
-                        borderColor: '#42a5f5',
-                        backgroundColor: 'rgba(66, 165, 245, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#42a5f5',
-                    },
-                    {
-                        label: '2026',
-                        data: mediaMensal('2026'),
-                        borderColor: '#00d4ff',
-                        backgroundColor: 'rgba(0, 212, 255, 0.15)',
-                        borderWidth: 2.5,
-                        tension: 0.4,
-                        pointRadius: 5,
-                        pointBackgroundColor: '#00d4ff',
-                        fill: true,
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { 
-                        position: 'top', 
-                        labels: { color: '#fff', usePointStyle: true, padding: 15 }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(10, 25, 41, 0.95)',
-                        padding: 12,
-                        callbacks: {
-                            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y ? ctx.parsed.y.toFixed(2) + ' m' : 'sem dados'}`
-                        }
-                    }
-                },
-                scales: {
-                    y: { 
-                        min: 10, max: 30,
-                        ticks: { callback: (v) => v + ' m' },
-                        grid: { color: 'rgba(30, 73, 118, 0.3)' }
-                    },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
         
         // ============= VELOCIDADE =============
         function velocidadeMensal(ano) {
