@@ -86,6 +86,12 @@
         .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
         .tab-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: 6px; }
         .tab-panel[hidden] { display: none; }
+        .tabs { overflow-x: auto; scrollbar-width: none; }
+        .tabs::-webkit-scrollbar { display: none; }
+        @media (max-width: 520px) {
+            .tabs { gap: 0; padding: 0; }
+            .tab-btn { flex: 1 1 0; min-width: 0; padding: 12px 4px 10px; font-size: 0.82em; line-height: 1.2; }
+        }
         .est-bloco { margin: 0 0 18px; }
         .est-titulo { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
         .est-destaque { font-size: 1.05em; margin: 0 0 8px; }
@@ -797,6 +803,7 @@
         <nav class="tabs" role="tablist" aria-label="Seções do painel">
             <button class="tab-btn active" role="tab" id="tab-geral" aria-controls="aba-geral" aria-selected="true" data-tab="geral">Visão geral</button>
             <button class="tab-btn" role="tab" id="tab-passeios" aria-controls="aba-passeios" aria-selected="false" data-tab="passeios" tabindex="-1">Passeios</button>
+            <button class="tab-btn" role="tab" id="tab-solimoes" aria-controls="aba-solimoes" aria-selected="false" data-tab="solimoes" tabindex="-1">Solimões</button>
             <button class="tab-btn" role="tab" id="tab-estatisticas" aria-controls="aba-estatisticas" aria-selected="false" data-tab="estatisticas" tabindex="-1">Estatísticas</button>
         </nav>
 
@@ -931,17 +938,6 @@
             </div>
         </div>
         
-        <!-- CABECEIRA DO SOLIMÕES -->
-        <div class="section" id="cabeceira-secao">
-            <div class="section-header">
-                <div class="section-title">Cabeceira do Solimões · Aviso Antecipado</div>
-            </div>
-            <div id="est-blocos"></div>
-            <div class="chart-container chart-container-small">
-                <canvas id="chartCabeceira"></canvas>
-            </div>
-            <div id="cabeceira-texto" style="margin-top: 14px; font-size: 0.92em; line-height: 1.75;"></div>
-        </div>
 
         <!-- PRÓXIMA ENCHENTE -->
         <div class="section">
@@ -1109,6 +1105,20 @@
         </div>
 
         </div><!-- /aba-passeios -->
+
+        <div class="tab-panel" id="aba-solimoes" role="tabpanel" aria-labelledby="tab-solimoes" hidden>
+                <div class="section" id="cabeceira-secao">
+            <div class="section-header">
+                <div class="section-title">Rio Solimões · Aviso Antecipado para Manaus</div>
+            </div>
+            <div style="font-size:0.9em;opacity:0.8;margin-bottom:14px;">Estações a montante de Manaus: Tabatinga (perto da fronteira, aviso de semanas) e Manacapuru (perto de Manaus, aviso de poucos dias).</div>
+            <div id="est-blocos"></div>
+            <div class="chart-container chart-container-small">
+                <canvas id="chartCabeceira"></canvas>
+            </div>
+            <div id="cabeceira-texto" style="margin-top: 14px; font-size: 0.92em; line-height: 1.75;"></div>
+        </div>
+        </div>
 
         <div class="tab-panel" id="aba-estatisticas" role="tabpanel" aria-labelledby="tab-estatisticas" hidden>
             <div class="section">
@@ -2242,8 +2252,8 @@
         // ============= ABAS =============
         (function () {
             const botoes = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
-            const painel = { geral: document.getElementById("aba-geral"), passeios: document.getElementById("aba-passeios"), estatisticas: document.getElementById("aba-estatisticas") };
-            if (!botoes.length || !painel.geral || !painel.passeios || !painel.estatisticas) return;
+            const painel = { geral: document.getElementById("aba-geral"), passeios: document.getElementById("aba-passeios"), solimoes: document.getElementById("aba-solimoes"), estatisticas: document.getElementById("aba-estatisticas") };
+            if (!botoes.length || !painel.geral || !painel.passeios || !painel.solimoes || !painel.estatisticas) return;
             function ativar(nome, focar) {
                 if (!painel[nome]) nome = "geral";
                 botoes.forEach(function (b) {
