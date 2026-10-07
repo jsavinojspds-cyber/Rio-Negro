@@ -1202,6 +1202,15 @@
                     : '.';
             }
             document.getElementById('insight-dinamico-titulo').textContent = insightTitulo;
+            // Ritmo do rio (cm/dia) e aceleração
+            const ritmoN = (n) => flatSeries.length > n ? (ultimo.cota - flatSeries[flatSeries.length - 1 - n].cota) * 100 / n : 0;
+            const ritmo3 = ritmoN(3), ritmo14 = ritmoN(14);
+            if (Math.abs(ritmo3) >= 1) {
+                let tendRitmo = "ritmo estável";
+                if (Math.abs(ritmo3) < Math.abs(ritmo14) * 0.8) tendRitmo = "desacelerando";
+                else if (Math.abs(ritmo3) > Math.abs(ritmo14) * 1.2) tendRitmo = "acelerando";
+                insightTexto += " Ritmo atual: " + (ritmo3 > 0 ? "+" : "") + ritmo3.toFixed(0) + " cm/dia (" + tendRitmo + "; média de 14 dias: " + (ritmo14 > 0 ? "+" : "") + ritmo14.toFixed(0) + " cm/dia).";
+            }
             document.getElementById('insight-dinamico-texto').textContent = insightTexto;
 
             const PASSEIOS = [
@@ -1266,6 +1275,9 @@
                     passeiosTexto += "<br>• " + pv.nome + " <strong>" + pv.acao + "</strong> " + quando + " (" + faixa + ")";
                 });
                 passeiosTexto += "<br><span style=\"opacity:0.6;font-size:0.85em;\">Estimativa linear: a vazante costuma desacelerar perto do fim, então use como referência.</span>";
+            }
+            else {
+                passeiosTexto += "<br><br>📅 <span style=\"opacity:0.8;\">Nenhum passeio muda de status nos próximos 45 dias no ritmo atual.</span>";
             }
             document.getElementById('insight-passeios-texto').innerHTML = passeiosTexto;
         }
