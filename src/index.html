@@ -944,7 +944,7 @@
         <!-- PRÓXIMA ENCHENTE -->
         <div class="section">
             <div class="section-header">
-                <div class="section-title">Próxima Enchente · Fundo e Pico Esperados</div>
+                <div class="section-title" id="enchente-titulo">Próxima Enchente · Fundo e Pico Esperados</div>
             </div>
             <div id="enchente-texto" style="font-size: 0.92em; line-height: 1.75;"></div>
         </div>
@@ -1799,19 +1799,31 @@
             for (let n = dn(ultimo.ano, 8, 1); n <= hojeN(); n++) { const c = get(n); if (c !== null && (tr0 === null || c < tr0.c)) tr0 = { n: n, c: c }; }
             function hojeN() { return dn(ultimo.ano, ultimo.mes, ultimo.dia); }
             const emEnchente = tr0 && tr0.n <= hojeN() - 20 && ultimo.cota - tr0.c >= 0.3;
+            const JAN45 = 45;
+            const pyN = ultimo.mes >= 7 ? ultimo.ano + 1 : ultimo.ano;
+            const picoMed = dn(pyN, 1, 1) + Math.round(quant(pd, 0.5));
+            const fyN = ultimo.mes <= 1 ? ultimo.ano - 1 : ultimo.ano;
+            const fundoMed = dn(fyN, 8, 1) + Math.round(quant(fd, 0.5));
+            const mostraPico = hojeN() >= picoMed - JAN45 && hojeN() <= picoMed + 20;
+            const mostraFundo = hojeN() >= fundoMed - JAN45 && hojeN() <= fundoMed + 20;
+            const tit = document.getElementById("enchente-titulo");
+            if (tit) tit.textContent = mostraPico && !mostraFundo ? "Cheia · Pico Esperado" : (mostraFundo && !mostraPico ? "Seca · Fundo Esperado" : "Próxima Enchente · Fundo e Pico Esperados");
             let html = "";
             if (emEnchente) {
                 html += "🌱 <strong>Enchente em curso:</strong> o fundo foi " + tr0.c.toFixed(2) + " m em " + U.fmtN(tr0.n) + "; o rio já subiu " + (ultimo.cota - tr0.c).toFixed(2) + " m em " + (hojeN() - tr0.n) + " dias.<br>";
             } else {
-                html += "🌊 <strong>Rio ainda em vazante</strong> (" + ultimo.cota.toFixed(2) + " m): o fundo de " + ultimo.ano + " ainda não foi confirmado.<br>";
-                if (A && A.anos.length >= 5) {
+                const _p7 = get(hojeN() - 7), _d7 = _p7 === null ? 0 : ultimo.cota - _p7;
+                if (ultimo.mes <= 7) html += (_d7 > 0.2 ? "🌱 <strong>Rio em enchente</strong> (" + ultimo.cota.toFixed(2) + " m, subindo).<br>" : (_d7 < -0.2 ? "🌊 <strong>Rio em vazante</strong> (" + ultimo.cota.toFixed(2) + " m, caindo).<br>" : "🌊 <strong>Rio estável</strong> (" + ultimo.cota.toFixed(2) + " m), perto do pico.<br>"));
+                else html += "🌊 <strong>Rio ainda em vazante</strong> (" + ultimo.cota.toFixed(2) + " m): o fundo de " + ultimo.ano + " ainda não foi confirmado.<br>";
+                if (mostraFundo && A && A.anos.length >= 5) {
                     const niv = [], ks = [];
                     A.anos.forEach(a => { let mn = null, kk = 0; A.arrs[a].forEach((c, k) => { if (c !== null && k <= 200 && (mn === null || c < mn)) { mn = c; kk = k; } }); if (mn !== null) { niv.push(mn); ks.push(kk); } });
                     const km = Math.round(quant(ks, 0.5));
                     html += "<br>🔜 <strong>Fundo deste ano (estimado pelos " + A.anos.length + " anos parecidos):</strong> cerca de " + quant(niv, 0.5).toFixed(1) + " m (80% dos anos entre " + quant(niv, 0.1).toFixed(1) + " e " + quant(niv, 0.9).toFixed(1) + " m), por volta de " + U.fmtDM(A.hoje + km) + " (entre " + U.fmtDM(A.hoje + Math.round(quant(ks, 0.1))) + " e " + U.fmtDM(A.hoje + Math.round(quant(ks, 0.9))) + ")" + (km > 0 ? ", daqui a ~" + km + " dias." : ".");
                 }
             }
-            html += "<br><br>⬇️ <strong>Fundo típico (" + fundos.length + " ciclos):</strong> mediana " + quant(fundos.map(f => f.c), 0.5).toFixed(1) + " m por volta de " + fundoData(0.5) + " (10% a 90% dos anos: " + quant(fundos.map(f => f.c), 0.1).toFixed(1) + " a " + quant(fundos.map(f => f.c), 0.9).toFixed(1) + " m; entre " + fundoData(0.1) + " e " + fundoData(0.9) + ")";
+            if (mostraFundo) html += "<br><br>⬇️ <strong>Fundo típico (" + fundos.length + " ciclos):</strong> mediana " + quant(fundos.map(f => f.c), 0.5).toFixed(1) + " m por volta de " + fundoData(0.5) + " (10% a 90% dos anos: " + quant(fundos.map(f => f.c), 0.1).toFixed(1) + " a " + quant(fundos.map(f => f.c), 0.9).toFixed(1) + " m; entre " + fundoData(0.1) + " e " + fundoData(0.9) + ")";
+            if (mostraPico) {
             html += "<br>🏔️ <strong>Pico típico (" + picos.length + " ciclos):</strong> mediana " + quant(picos.map(p => p.c), 0.5).toFixed(1) + " m por volta de " + picoData(0.5) + " (10% a 90% dos anos: " + quant(picos.map(p => p.c), 0.1).toFixed(1) + " a " + quant(picos.map(p => p.c), 0.9).toFixed(1) + " m; entre " + picoData(0.1) + " e " + picoData(0.9) + ")";
             const chance = (lim) => Math.round(100 * picos.filter(p => p.c >= lim).length / picos.length);
             html += "<br>🎯 <strong>Chance de o pico passar de</strong> 26 m: " + chance(26) + "% · 27 m: " + chance(27) + "% · 28 m: " + chance(28) + "% · 29 m: " + chance(29) + "%";
@@ -1820,6 +1832,8 @@
             if (durs.length) html += "<br>⏱️ <strong>Do fundo ao pico:</strong> cerca de " + quant(durs, 0.5).toFixed(1) + " meses (" + quant(durs, 0.1).toFixed(1) + " a " + quant(durs, 0.9).toFixed(1) + ").";
             const rec = picos.filter(p => p.ano >= 2024).map(p => p.c.toFixed(2) + " m em " + U.fmtN(p.n));
             if (rec.length) html += "<br>📍 <strong>Picos recentes (app):</strong> " + rec.join(" · ");
+            }
+            if (!mostraFundo && !mostraPico) html += "<br>⏳ A previsão do " + (hojeN() < fundoMed ? "fundo aparece a partir de " + U.fmtDM(fundoMed - JAN45) : "pico aparece a partir de " + U.fmtDM(picoMed - JAN45)) + " (45 dias antes do evento típico).";
             html += "<br><span style='opacity:0.6;font-size:0.85em;'>Base: série oficial da ANA/SGB (estação 14990000, 1902-2014) mais os dados do app (2023-2026); o período 2015-2023 é estimado a partir da estação de Manacapuru (erro típico de uns 40 cm). O clima mudou nas últimas décadas: use como referência de época, não como previsão exata.</span>";
             el.innerHTML = html;
 
