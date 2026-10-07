@@ -900,6 +900,15 @@
             <div id="projecao-texto" style="margin-top: 14px; font-size: 0.9em; line-height: 1.7;"></div>
         </div>
 
+        <!-- SEMÁFORO SEMANAL -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Semáforo Semanal dos Passeios · Próximas 12 Semanas</div>
+            </div>
+            <div id="semaforo-passeios" style="overflow-x: auto;"></div>
+            <div id="semaforo-legenda" style="margin-top: 10px; font-size: 0.8em; color: var(--text-secondary); line-height: 1.6;"></div>
+        </div>
+
         <!-- PRÓXIMA ENCHENTE -->
         <div class="section">
             <div class="section-header">
@@ -1598,6 +1607,7 @@
                     }
                 }
             });
+            window.PROJECAO_ANALOGOS = projs;
             const lista = (window.PASSEIOS_LISTA || []).filter(p => p.tipo !== "sempre");
             const linhas = [];
             lista.forEach(p => {
@@ -1625,6 +1635,57 @@
             }
             html += "<br><span style=\"opacity:0.6;font-size:0.85em;\">Simulação, não previsão: repete a variação do rio em anos com mesmo nível e fase nesta época (" + anos.join(", ") + "). Cada ano é diferente; com poucos anos de histórico, trate como referência.</span>";
             el.innerHTML = html;
+        })();
+
+        // ============= SEMÁFORO SEMANAL =============
+        (function() {
+            const box = document.getElementById("semaforo-passeios");
+            const leg = document.getElementById("semaforo-legenda");
+            if (!box || !leg) return;
+            const lista = (window.PASSEIOS_LISTA || []).filter(p => p.tipo !== "sempre");
+            if (!lista.length) return;
+            const SEMANAS = 12, DIAS = SEMANAS * 7;
+            const n = flatSeries.length;
+            const taxa = (ultimo.cota - flatSeries[n - 8].cota) / 7;
+            const projs = window.PROJECAO_ANALOGOS || {};
+            const anosP = Object.keys(projs);
+            const cotaDia = [];
+            for (let k = 0; k < DIAS; k++) {
+                if (anosP.length) {
+                    let s = 0, c = 0;
+                    anosP.forEach(a => { const val = projs[a][30 + k]; if (val !== undefined && val !== null) { s += val; c++; } });
+                    cotaDia.push(c ? s / c : null);
+                } else {
+                    cotaDia.push(ultimo.cota + taxa * k);
+                }
+            }
+            const addDias = (d) => new Date(ultimo.ano, ultimo.mes - 1, ultimo.dia + d);
+            const fmtD = (dt) => String(dt.getDate()).padStart(2, "0") + "/" + String(dt.getMonth() + 1).padStart(2, "0");
+            let h = "<table style=\"width:100%;border-collapse:separate;border-spacing:2px;font-size:0.78em;\"><thead><tr><th style=\"text-align:left;padding:4px 6px;\">Passeio</th>";
+            for (let w = 0; w < SEMANAS; w++) h += "<th style=\"padding:4px 2px;font-weight:600;white-space:nowrap;\">" + fmtD(addDias(7 * w)) + "</th>";
+            h += "</tr></thead><tbody>";
+            lista.forEach(p => {
+                const rotulo = p.tipo === "ate" ? "até " + p.limite + " m" : "acima de " + p.limite + " m";
+                h += "<tr><td style=\"padding:4px 6px;min-width:150px;\">" + p.nome + " <span style=\"opacity:0.55;white-space:nowrap;\">(" + rotulo + ")</span></td>";
+                for (let w = 0; w < SEMANAS; w++) {
+                    const vals = cotaDia.slice(7 * w, 7 * w + 7);
+                    if (vals.some(x => x === null)) { h += "<td style=\"background:rgba(120,130,140,0.18);border-radius:4px;\">&nbsp;</td>"; continue; }
+                    const ab = vals.map(c => p.tipo === "ate" ? c <= p.limite : c >= p.limite);
+                    const todos = ab.every(x => x), nenhum = !ab.some(x => x);
+                    const margem = Math.min(...vals.map(c => Math.abs(c - p.limite)));
+                    if (todos && margem >= 0.3) h += "<td style=\"background:rgba(76,175,80,0.8);border-radius:4px;\">&nbsp;</td>";
+                    else if (nenhum && margem >= 0.3) h += "<td style=\"background:rgba(244,67,54,0.5);border-radius:4px;\">&nbsp;</td>";
+                    else {
+                        const txt = (todos || nenhum) ? "limite" : (ab[0] ? "fecha" : "abre");
+                        h += "<td style=\"background:rgba(255,193,7,0.85);color:#1a1a1a;text-align:center;font-weight:700;border-radius:4px;padding:3px 2px;\">" + txt + "</td>";
+                    }
+                }
+                h += "</tr>";
+            });
+            h += "</tbody></table>";
+            box.innerHTML = h;
+            const fonte = anosP.length ? "média dos anos parecidos (" + anosP.join(", ") + ")" : "o ritmo atual do rio (" + (taxa * 100).toFixed(0) + " cm/dia)";
+            leg.innerHTML = "🟩 aberto a semana toda · 🟨 arriscado: abre/fecha na semana ou fica a menos de 30 cm do limite · 🟥 fechado · cinza: sem estimativa<br>Cenário usado: " + fonte + ". É uma simulação para planejar, não uma garantia: confira o nível real perto da data do passeio.";
         })();
 
         // ============= PRÓXIMA ENCHENTE (fundo e pico históricos) =============
