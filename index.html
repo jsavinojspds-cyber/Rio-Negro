@@ -887,6 +887,17 @@
             </div>
         </div>
         
+        <!-- PROJEÇÃO POR ANÁLOGOS -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Projeção por Anos Parecidos</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartProjecao"></canvas>
+            </div>
+            <div id="projecao-texto" style="margin-top: 14px; font-size: 0.9em; line-height: 1.7;"></div>
+        </div>
+
         <!-- HEATMAP MENSAL -->
         <div class="section">
             <div class="section-header">
@@ -1228,6 +1239,7 @@
                 {nome: 'Praia Grande, Vista do Lago, Janauacá', tipo: 'acima', limite: 28},
                 {nome: 'Praia da Sara', tipo: 'sempre', limite: null}
             ];
+            window.PASSEIOS_LISTA = PASSEIOS;
             const cotaP = ultimo.cota;
             const abertosP = [];
             const chegandoP = [];
@@ -1482,6 +1494,103 @@
         }
         criarComparacao();
         
+        // ============= PROJEÇÃO POR ANÁLOGOS =============
+        (function() {
+            const el = document.getElementById("projecao-texto");
+            const canvas = document.getElementById("chartProjecao");
+            if (!el || !canvas || flatSeries.length < 40) return;
+            const n = flatSeries.length;
+            const var7 = ultimo.cota - flatSeries[n - 8].cota;
+            const sinal = var7 >= 0 ? 1 : -1;
+            const HORIZ = 240;
+            const doyDe = (p) => Math.floor((new Date(p.ano, p.mes - 1, p.dia) - new Date(p.ano, 0, 0)) / 86400000);
+            const doyHoje = doyDe(ultimo);
+            const melhor = {};
+            for (let i = 8; i < n - 10; i++) {
+                const p = flatSeries[i];
+                if (p.ano >= ultimo.ano) break;
+                const v7 = p.cota - flatSeries[i - 7].cota;
+                if ((v7 >= 0 ? 1 : -1) !== sinal) continue;
+                if (Math.abs(p.cota - ultimo.cota) > 0.5) continue;
+                let dd = Math.abs(doyDe(p) - doyHoje);
+                dd = Math.min(dd, 365 - dd);
+                if (dd > 75) continue;
+                const score = Math.abs(p.cota - ultimo.cota) + dd / 100;
+                if (!melhor[p.ano] || score < melhor[p.ano].score) melhor[p.ano] = { i: i, score: score };
+            }
+            const anos = Object.keys(melhor).sort();
+            if (!anos.length) {
+                el.innerHTML = "Nenhum ano anterior teve nível e fase parecidos nesta época do ano, então não há projeção por comparação.";
+                canvas.parentElement.style.display = "none";
+                return;
+            }
+            const addDias = (d) => new Date(ultimo.ano, ultimo.mes - 1, ultimo.dia + d);
+            const fmt = (dt) => String(dt.getDate()).padStart(2, "0") + "/" + String(dt.getMonth() + 1).padStart(2, "0") + "/" + String(dt.getFullYear()).slice(2);
+            const labels = [];
+            for (let d = -30; d <= HORIZ; d++) labels.push(fmt(addDias(d)));
+            const cores = ["#ffb74d", "#ba68c8", "#81c784", "#f06292"];
+            const datasets = [{ label: ultimo.ano + " (real)", data: labels.map((_, k) => k <= 30 ? flatSeries[n - 1 - (30 - k)].cota : null), borderColor: "#00d4ff", borderWidth: 3, pointRadius: 0, tension: 0.3 }];
+            const projs = {};
+            anos.forEach((ano, idx) => {
+                const i0 = melhor[ano].i;
+                const base = flatSeries[i0].cota;
+                const ref = flatSeries[i0];
+                const arr = labels.map((_, k) => {
+                    const f = k - 30;
+                    if (f < 0) return null;
+                    const j = i0 + f;
+                    if (j >= n || flatSeries[j].ano >= ultimo.ano) return null;
+                    return ultimo.cota + (flatSeries[j].cota - base);
+                });
+                projs[ano] = arr;
+                datasets.push({ label: "Como em " + ano + " (a partir de " + String(ref.dia).padStart(2, "0") + "/" + String(ref.mes).padStart(2, "0") + ")", data: arr, borderColor: cores[idx % cores.length], borderDash: [6, 4], borderWidth: 2, pointRadius: 0, tension: 0.3 });
+            });
+            new Chart(canvas.getContext("2d"), {
+                type: "line",
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: "index" },
+                    plugins: {
+                        legend: { position: "top", labels: { color: "#fff", usePointStyle: true, pointStyle: "line", padding: 16, font: { size: 12 } } },
+                        tooltip: { backgroundColor: "rgba(10, 25, 41, 0.95)", padding: 12, titleColor: "#00d4ff", callbacks: { label: (c) => c.dataset.label + ": " + c.parsed.y.toFixed(2) + " m" } }
+                    },
+                    scales: {
+                        y: { ticks: { callback: (val) => val + " m" }, grid: { color: "rgba(30, 73, 118, 0.3)" } },
+                        x: { ticks: { maxTicksLimit: 10, maxRotation: 0 }, grid: { display: false } }
+                    }
+                }
+            });
+            const lista = (window.PASSEIOS_LISTA || []).filter(p => p.tipo !== "sempre");
+            const linhas = [];
+            lista.forEach(p => {
+                const aberto = p.tipo === "ate" ? ultimo.cota <= p.limite : ultimo.cota >= p.limite;
+                const quando = [];
+                anos.forEach(ano => {
+                    const arr = projs[ano];
+                    for (let k = 30; k < arr.length; k++) {
+                        const c = arr[k];
+                        if (c === null) break;
+                        const abertoK = p.tipo === "ate" ? c <= p.limite : c >= p.limite;
+                        if (abertoK !== aberto) { quando.push({ d: k - 30, ano: ano }); break; }
+                    }
+                });
+                if (quando.length) linhas.push({ nome: p.nome, acao: aberto ? "fecha" : "abre", quando: quando, min: Math.min(...quando.map(q => q.d)) });
+            });
+            linhas.sort((a, b) => a.min - b.min);
+            let html = "<strong>Quando cada passeio muda de status, se o rio repetir o que fez em anos parecidos:</strong>";
+            if (!linhas.length) {
+                html += "<br>Nenhuma mudança de status dentro de " + HORIZ + " dias nesse cenário.";
+            } else {
+                linhas.forEach(l => {
+                    html += "<br>• " + l.nome + " <strong>" + l.acao + "</strong> por volta de " + l.quando.map(q => fmt(addDias(q.d)) + " (como em " + q.ano + ")").join(" · ");
+                });
+            }
+            html += "<br><span style=\"opacity:0.6;font-size:0.85em;\">Simulação, não previsão: repete a variação do rio em anos com mesmo nível e fase nesta época (" + anos.join(", ") + "). Cada ano é diferente; com poucos anos de histórico, trate como referência.</span>";
+            el.innerHTML = html;
+        })();
+
         // ============= GRÁFICO MENSAL =============
         function mediaMensal(ano) {
             const arr = [];
