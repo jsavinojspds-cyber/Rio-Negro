@@ -1241,6 +1241,32 @@
                 passeiosTexto += `🚫 Encerrou: <strong>${passouP[0].nome}</strong> (há ${Math.round(passouP[0].diff*100)}cm). `;
             }
             passeiosTexto += `${abertosP.length} passeios/cachoeiras disponíveis agora: <strong>${abertosP.map(p => p.nome).join(', ')}</strong>.`;
+            // Previsão de abertura/fechamento (extrapolação linear do ritmo recente)
+            const taxaDia = (n) => flatSeries.length > n ? (ultimo.cota - flatSeries[flatSeries.length - 1 - n].cota) / n : 0;
+            const taxasP = [taxaDia(3), taxaDia(7), taxaDia(14)];
+            const fmtDataP = (d) => { const dt = new Date(ultimo.ano, ultimo.mes - 1, ultimo.dia + Math.round(d)); return String(dt.getDate()).padStart(2, "0") + "/" + String(dt.getMonth() + 1).padStart(2, "0"); };
+            const previsoesP = [];
+            PASSEIOS.forEach(p => {
+                if (p.tipo === "sempre") return;
+                const abertoP = p.tipo === "ate" ? cotaP <= p.limite : cotaP >= p.limite;
+                const distP = p.limite - cotaP;
+                const diasP = taxasP.map(tx => (tx !== 0 && (distP / tx) > 0) ? distP / tx : null);
+                const centralP = diasP[1];
+                if (centralP === null || centralP > 45) return;
+                const validosP = diasP.filter(d => d !== null);
+                previsoesP.push({ nome: p.nome, acao: abertoP ? "fecha" : "abre", central: centralP, min: Math.min(...validosP), max: Math.max(...validosP) });
+            });
+            previsoesP.sort((a, b) => a.central - b.central);
+            if (previsoesP.length) {
+                passeiosTexto += "<br><br>📅 <strong>Previsão pelo ritmo atual (" + (taxasP[1] * 100).toFixed(0) + " cm/dia):</strong>";
+                previsoesP.slice(0, 6).forEach(pv => {
+                    const dc = Math.round(pv.central);
+                    const quando = dc < 1 ? "em menos de 1 dia" : "em ~" + dc + (dc === 1 ? " dia" : " dias");
+                    const faixa = Math.round(pv.min) === Math.round(pv.max) ? fmtDataP(pv.central) : fmtDataP(pv.min) + " a " + fmtDataP(pv.max);
+                    passeiosTexto += "<br>• " + pv.nome + " <strong>" + pv.acao + "</strong> " + quando + " (" + faixa + ")";
+                });
+                passeiosTexto += "<br><span style=\"opacity:0.6;font-size:0.85em;\">Estimativa linear: a vazante costuma desacelerar perto do fim, então use como referência.</span>";
+            }
             document.getElementById('insight-passeios-texto').innerHTML = passeiosTexto;
         }
         
