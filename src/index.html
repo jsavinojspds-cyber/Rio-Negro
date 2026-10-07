@@ -900,6 +900,14 @@
             <div id="projecao-texto" style="margin-top: 14px; font-size: 0.9em; line-height: 1.7;"></div>
         </div>
 
+        <!-- PRÓXIMA ENCHENTE -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Próxima Enchente · Fundo e Pico Esperados</div>
+            </div>
+            <div id="enchente-texto" style="font-size: 0.92em; line-height: 1.75;"></div>
+        </div>
+
         <!-- CALENDÁRIO DE PASSEIOS -->
         <div class="section">
             <div class="section-header">
@@ -1616,6 +1624,65 @@
                 });
             }
             html += "<br><span style=\"opacity:0.6;font-size:0.85em;\">Simulação, não previsão: repete a variação do rio em anos com mesmo nível e fase nesta época (" + anos.join(", ") + "). Cada ano é diferente; com poucos anos de histórico, trate como referência.</span>";
+            el.innerHTML = html;
+        })();
+
+        // ============= PRÓXIMA ENCHENTE (fundo e pico históricos) =============
+        (function() {
+            const el = document.getElementById("enchente-texto");
+            if (!el) return;
+            const n = flatSeries.length;
+            const fmtP = (p) => String(p.dia).padStart(2, "0") + "/" + String(p.mes).padStart(2, "0") + "/" + String(p.ano).slice(2);
+            const diaAno = (p) => Math.round((new Date(p.ano, p.mes - 1, p.dia) - new Date(p.ano, 0, 1)) / 86400000);
+            const anosS = Array.from(new Set(flatSeries.map(p => p.ano))).filter(a => a >= 2024).sort();
+            const picos = [], fundos = [];
+            anosS.forEach(a => {
+                const jp = flatSeries.filter(p => p.ano === a && p.mes >= 3 && p.mes <= 9);
+                if (jp.length >= 150) picos.push(jp.reduce((m, p) => p.cota > m.cota ? p : m));
+                const idxs = [];
+                flatSeries.forEach((p, i) => { if ((p.ano === a && p.mes >= 8) || (p.ano === a + 1 && p.mes <= 1)) idxs.push(i); });
+                if (idxs.length) {
+                    let im = idxs[0];
+                    idxs.forEach(i => { if (flatSeries[i].cota < flatSeries[im].cota) im = i; });
+                    if (im <= n - 21) fundos.push(flatSeries[im]);
+                }
+            });
+            const mediaDia = (arr) => arr.reduce((s, p) => s + diaAno(p), 0) / arr.length;
+            const dataDoDia = (d) => { const dt = new Date(ultimo.ano, 0, 1 + Math.round(d)); return String(dt.getDate()).padStart(2, "0") + "/" + String(dt.getMonth() + 1).padStart(2, "0"); };
+            const hoje = new Date(ultimo.ano, ultimo.mes - 1, ultimo.dia);
+            let html = "";
+            const ultFundo = fundos.length ? fundos[fundos.length - 1] : null;
+            const emEnchente = ultFundo && ultFundo.ano === ultimo.ano && ultimo.cota - ultFundo.cota >= 0.3;
+            if (emEnchente) {
+                const dias = Math.round((hoje - new Date(ultFundo.ano, ultFundo.mes - 1, ultFundo.dia)) / 86400000);
+                html += "🌱 <strong>Enchente em curso:</strong> o fundo foi " + ultFundo.cota.toFixed(2) + " m em " + fmtP(ultFundo) + "; o rio já subiu " + (ultimo.cota - ultFundo.cota).toFixed(2) + " m em " + dias + " dias.<br>";
+            } else {
+                html += "🌊 <strong>Rio ainda em vazante</strong> (" + ultimo.cota.toFixed(2) + " m): o fundo de " + ultimo.ano + " ainda não foi confirmado.<br>";
+            }
+            if (fundos.length) {
+                html += "<br>⬇️ <strong>Fundos anteriores:</strong> " + fundos.map(p => p.cota.toFixed(2) + " m em " + fmtP(p)).join(" · ");
+                if (!emEnchente) {
+                    const dm = mediaDia(fundos);
+                    const dmin = Math.min(...fundos.map(diaAno)), dmax = Math.max(...fundos.map(diaAno));
+                    const alvo = new Date(ultimo.ano, 0, 1 + Math.round(dm));
+                    const falta = Math.round((alvo - hoje) / 86400000);
+                    html += "<br>🔜 <strong>Início esperado da subida:</strong> por volta de " + dataDoDia(dm) + " (historicamente entre " + dataDoDia(dmin) + " e " + dataDoDia(dmax) + ")" + (falta > 0 ? ", daqui a ~" + falta + " dias." : ".");
+                }
+            }
+            if (picos.length) {
+                const dp = mediaDia(picos);
+                html += "<br><br>⬆️ <strong>Picos anteriores:</strong> " + picos.map(p => p.cota.toFixed(2) + " m em " + fmtP(p)).join(" · ");
+                html += "<br>🏔️ <strong>Pico esperado:</strong> por volta de " + dataDoDia(dp) + " (historicamente entre " + dataDoDia(Math.min(...picos.map(diaAno))) + " e " + dataDoDia(Math.max(...picos.map(diaAno))) + "), com altura entre " + Math.min(...picos.map(p => p.cota)).toFixed(2) + " e " + Math.max(...picos.map(p => p.cota)).toFixed(2) + " m nos anos registrados.";
+            }
+            if (fundos.length && picos.length) {
+                const meses = [];
+                fundos.forEach(f => {
+                    const pk = picos.find(p => new Date(p.ano, p.mes - 1, p.dia) > new Date(f.ano, f.mes - 1, f.dia));
+                    if (pk) meses.push((new Date(pk.ano, pk.mes - 1, pk.dia) - new Date(f.ano, f.mes - 1, f.dia)) / 86400000 / 30.4);
+                });
+                if (meses.length) html += "<br>⏱️ <strong>Do fundo ao pico:</strong> cerca de " + (meses.reduce((s, x) => s + x, 0) / meses.length).toFixed(1) + " meses nos ciclos completos.";
+            }
+            html += "<br><span style=\"opacity:0.6;font-size:0.85em;\">Baseado em poucos ciclos (" + anosS[0] + " a " + anosS[anosS.length - 1] + "): serve como referência de época, não como previsão exata.</span>";
             el.innerHTML = html;
         })();
 
