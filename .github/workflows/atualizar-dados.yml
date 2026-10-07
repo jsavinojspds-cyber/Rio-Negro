@@ -25,16 +25,21 @@ jobs:
         id: scraper
         run: python scripts/scraper.py --verbose
 
+      - name: Buscar nível da cabeceira do Solimões (SACE/SGB)
+        continue-on-error: true
+        run: python scripts/cabeceira.py
+
       - name: Copiar arquivos atualizados para a raiz (GitHub Pages)
         run: |
           cp src/index.html index.html
           cp src/data.js data.js
+          if [ -f src/cabeceira.js ]; then cp src/cabeceira.js cabeceira.js; fi
 
       - name: Commit e push (se houver mudanças)
         run: |
           git config user.name "Rio Negro Bot"
           git config user.email "actions@github.com"
-          git add data.js src/data.js data/rio-negro-cotas.json index.html
+          git add data.js src/data.js data/rio-negro-cotas.json index.html cabeceira.js src/cabeceira.js
           if git diff --staged --quiet; then
             echo "Nenhuma mudança para commitar."
           else

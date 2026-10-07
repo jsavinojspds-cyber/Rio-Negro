@@ -909,6 +909,17 @@
             <div id="semaforo-legenda" style="margin-top: 10px; font-size: 0.8em; color: var(--text-secondary); line-height: 1.6;"></div>
         </div>
 
+        <!-- CABECEIRA DO SOLIMÕES -->
+        <div class="section" id="cabeceira-secao">
+            <div class="section-header">
+                <div class="section-title">Cabeceira do Solimões · Aviso Antecipado</div>
+            </div>
+            <div class="chart-container chart-container-small">
+                <canvas id="chartCabeceira"></canvas>
+            </div>
+            <div id="cabeceira-texto" style="margin-top: 14px; font-size: 0.92em; line-height: 1.75;"></div>
+        </div>
+
         <!-- PRÓXIMA ENCHENTE -->
         <div class="section">
             <div class="section-header">
@@ -1085,6 +1096,7 @@
     </div>
 
     <script src="data.js"></script>
+    <script src="cabeceira.js"></script>
     <script>
         // ============= DADOS =============
         // (objeto "dados" já carregado via data.js)
@@ -1699,6 +1711,80 @@
             h += "</tbody></table>";
             box.innerHTML = h;
             leg.innerHTML = "🟩 aberto em 90% ou mais dos anos parecidos · 🟨 chance de estar aberto (% dos anos parecidos) · 🟥 fechado em 90% ou mais dos anos parecidos · cinza: sem estimativa<br>Base: " + A.anos.length + " anos com nível, fase e época parecidos com os de hoje (série oficial ANA/SGB 1902-2014, 2015-2023 estimado por Manacapuru, + dados do app). É probabilidade para planejar, não garantia: confira o nível real perto da data.";
+        })();
+
+        // ============= CABECEIRA DO SOLIMÕES (SACE/SGB) =============
+        (function () {
+            const sec = document.getElementById("cabeceira-secao");
+            const el = document.getElementById("cabeceira-texto");
+            const canvas = document.getElementById("chartCabeceira");
+            if (!sec || !el || !canvas) return;
+            if (typeof cabeceira === "undefined" || !cabeceira.tabatinga || !cabeceira.manacapuru) { sec.style.display = "none"; return; }
+            const DAY = 86400000;
+            const t = function (s) { return Date.parse(s + "T12:00:00Z"); };
+            const fmt = function (s) { return s.slice(8, 10) + "/" + s.slice(5, 7); };
+            const mapa = function (st) { const m = {}; st.dias.forEach(function (p) { m[p[0]] = p[1]; }); return m; };
+            const iso = function (ms) { return new Date(ms).toISOString().slice(0, 10); };
+            const TAB = cabeceira.tabatinga, MAN = cabeceira.manacapuru;
+            const mT = mapa(TAB), mM = mapa(MAN);
+            const lastOf = function (st) { return st.dias[st.dias.length - 1]; };
+            // valor mais próximo de n dias antes da última leitura (tolerância de 1 dia)
+            const atras = function (st, m, n) {
+                const ult = lastOf(st); const alvo = t(ult[0]) - n * DAY;
+                for (let k = 0; k <= 1; k++) { const a = iso(alvo - k * DAY); if (m[a] !== undefined) return { dia: a, v: m[a] }; }
+                return null;
+            };
+            const tend = function (st, m) {
+                const ult = lastOf(st); const a7 = atras(st, m, 7); const a14 = atras(st, m, 14);
+                const dias7 = a7 ? (t(ult[0]) - t(a7.dia)) / DAY : null;
+                const s7 = a7 ? (ult[1] - a7.v) / dias7 : null;
+                let sPrev = null;
+                if (a7 && a14) { sPrev = (a7.v - a14.v) / ((t(a7.dia) - t(a14.dia)) / DAY); }
+                return { ult: ult, s7: s7, sPrev: sPrev };
+            };
+            const rotulo = function (s) { if (s === null) return "sem tendência"; if (s < -0.03) return "caindo"; if (s > 0.03) return "subindo"; return "estável"; };
+            const cm = function (s) { return Math.abs(s * 100).toFixed(0) + " cm/dia"; };
+            const tt = tend(TAB, mT), tm = tend(MAN, mM);
+            // gráfico: últimos 70 dias
+            const fim = Math.max(t(tt.ult[0]), t(tm.ult[0]));
+            const labelsISO = [];
+            for (let d = fim - 69 * DAY; d <= fim; d += DAY) labelsISO.push(iso(d));
+            new Chart(canvas.getContext("2d"), {
+                type: "line",
+                data: { labels: labelsISO.map(fmt), datasets: [
+                    { label: "Tabatinga (m)", data: labelsISO.map(function (d) { return mT[d] !== undefined ? mT[d] : null; }), borderColor: "#ff9800", backgroundColor: "#ff9800", borderWidth: 2, pointRadius: 0, tension: 0.25, spanGaps: true },
+                    { label: "Manacapuru (m)", data: labelsISO.map(function (d) { return mM[d] !== undefined ? mM[d] : null; }), borderColor: "#00d4ff", backgroundColor: "#00d4ff", borderWidth: 2, pointRadius: 0, tension: 0.25, spanGaps: true }
+                ] },
+                options: { responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+                    plugins: { legend: { labels: { color: "#b0bec5" } }, tooltip: { callbacks: { label: function (c) { return c.dataset.label.replace("(m)", "") + ": " + (c.parsed.y === null ? "-" : c.parsed.y.toFixed(2) + " m"); } } } },
+                    scales: { x: { ticks: { color: "#78909c", maxTicksLimit: 8 }, grid: { color: "rgba(255,255,255,0.05)" } }, y: { ticks: { color: "#78909c", callback: function (v) { return v + " m"; } }, grid: { color: "rgba(255,255,255,0.05)" } } } }
+            });
+            let html = "";
+            // Manacapuru (indicador de poucos dias)
+            html += "🌊 <b>Manacapuru</b> (Solimões, perto de Manaus): <b>" + tm.ult[1].toFixed(2) + " m</b> em " + fmt(tm.ult[0]) + ", " + rotulo(tm.s7) + (tm.s7 !== null && Math.abs(tm.s7) >= 0.03 ? " (" + cm(tm.s7) + " nos últimos 7 dias" : (tm.s7 !== null ? " (" + cm(tm.s7) : " (")) + (tm.sPrev !== null && Math.abs(tm.sPrev) >= 0.03 ? "; semana anterior: " + (tm.sPrev < 0 ? "caía " : "subia ") + cm(tm.sPrev) : "") + ").";
+            const a3 = atras(MAN, mM, 3);
+            if (a3 && ultimo && fmt(tm.ult[0]) === (String(ultimo.dia).padStart(2, "0") + "/" + String(ultimo.mes).padStart(2, "0"))) {
+                const d3 = tm.ult[1] - a3.v;
+                const alvo = ultimo.cota + d3;
+                html += "<br>🔭 Em ~3 dias, Manaus tende a ficar em torno de <b>" + alvo.toFixed(2) + " m</b> (" + (d3 < 0 ? "−" : "+") + Math.abs(d3).toFixed(2) + " m). No histórico, essa regra errou em média só uns 6 cm em 3 dias.";
+            }
+            if (tm.s7 !== null) {
+                if (tm.s7 > 0.03) html += "<br>➡️ Manacapuru já está <b>subindo</b>: o fundo de Manaus está passando ou já passou.";
+                else if (tm.s7 >= -0.03) html += "<br>➡️ Manacapuru está <b>estável</b>: Manaus deve estar perto do fundo.";
+                else if (tm.sPrev !== null && Math.abs(tm.s7) < 0.6 * Math.abs(tm.sPrev)) html += "<br>➡️ Manacapuru ainda cai, mas <b>desacelerando</b>: o fundo de Manaus se aproxima.";
+                else html += "<br>➡️ Manacapuru ainda <b>cai no mesmo ritmo</b>: Manaus deve seguir caindo nos próximos dias.";
+            }
+            // Tabatinga (aviso de semanas)
+            html += "<br><br>🏔️ <b>Tabatinga</b> (cabeceira do Solimões): <b>" + tt.ult[1].toFixed(2) + " m</b> em " + fmt(tt.ult[0]) + ", " + rotulo(tt.s7) + (tt.s7 !== null ? " (" + cm(tt.s7) + " nos últimos 7 dias)" : "") + ".";
+            const desde = TAB.dias.filter(function (p) { return p[0] >= (tt.ult[0].slice(0, 4) + "-08-01"); });
+            if (desde.length > 5) {
+                let mn = desde[0]; desde.forEach(function (p) { if (p[1] < mn[1]) mn = p; });
+                const ha = Math.round((t(tt.ult[0]) - t(mn[0])) / DAY);
+                html += "<br>Menor nível desde agosto: " + mn[1].toFixed(2) + " m em " + fmt(mn[0]) + (ha > 0 ? " (há " + ha + " dias)" : " (hoje)") + ".";
+            }
+            html += "<br>No histórico (1982-2025, 29 anos), o fundo anual de Tabatinga vem em mediana <b>43 dias antes</b> do fundo de Manaus (10% dos anos: 13 dias; 90%: 70 dias). Tabatinga oscila bastante de um dia para o outro: use como aviso de semanas, não de dias.";
+            html += "<br><span style='opacity:0.6;font-size:0.85em;'>Fonte: SACE/SGB (sace.sgb.gov.br), leituras da estação automática, média diária; atualizado pelo robô uma vez por dia. Relações calculadas com séries históricas da ANA (Hidroweb).</span>";
+            el.innerHTML = html;
         })();
 
         // ============= PRÓXIMA ENCHENTE (fundo e pico: série oficial + app) =============
