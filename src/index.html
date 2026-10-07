@@ -1885,6 +1885,7 @@
                 out += "<div>🏔️ <b>Cheia (pico) por volta de " + fm(picoN) + "</b>, perto de <b>" + picoNiv.toFixed(1) + " m</b> (80% dos casos: " + picoLo.toFixed(1) + " a " + picoHi.toFixed(1) + " m; data entre " + fm(picoNLo) + " e " + fm(picoNHi) + ").</div>";
                 if (sinal) out += "<div style='margin-top:6px;'>📡 " + sinal + "</div>";
                 out += "<div style='opacity:0.6;font-size:0.8em;margin-top:6px;'>Estimativa por anos parecidos" + (cond ? " e pela relação entre o fundo e a cheia seguinte" : "") + ". Detalhes e margens abaixo e na aba Passeios.</div>";
+                out += "<div style='margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);font-style:italic;opacity:0.9;'>⚠️ São dados estatísticos, baseados no histórico, e podem sofrer alterações.</div>";
                 R.innerHTML = out;
             }
         })();
