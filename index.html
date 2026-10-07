@@ -86,6 +86,13 @@
         .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
         .tab-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: 6px; }
         .tab-panel[hidden] { display: none; }
+        .est-bloco { margin: 0 0 18px; }
+        .est-titulo { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+        .est-destaque { font-size: 1.05em; margin: 0 0 8px; }
+        .est-bloco p { margin: 0 0 8px; }
+        .est-duas { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+        .est-tag { font-size: 0.75em; padding: 1px 6px; border-radius: 8px; background: rgba(255,152,0,0.18); color: var(--warning); }
+        #aba-estatisticas .chart-container { margin-bottom: 18px; }
 
         /* HEADER */
         .header {
@@ -789,6 +796,7 @@
         <nav class="tabs" role="tablist" aria-label="Seções do painel">
             <button class="tab-btn active" role="tab" id="tab-geral" aria-controls="aba-geral" aria-selected="true" data-tab="geral">Visão geral</button>
             <button class="tab-btn" role="tab" id="tab-passeios" aria-controls="aba-passeios" aria-selected="false" data-tab="passeios" tabindex="-1">Passeios</button>
+            <button class="tab-btn" role="tab" id="tab-estatisticas" aria-controls="aba-estatisticas" aria-selected="false" data-tab="estatisticas" tabindex="-1">Estatísticas</button>
         </nav>
 
         <div class="tab-panel" id="aba-geral" role="tabpanel" aria-labelledby="tab-geral">
@@ -1090,6 +1098,13 @@
         </div>
 
         </div><!-- /aba-passeios -->
+
+        <div class="tab-panel" id="aba-estatisticas" role="tabpanel" aria-labelledby="tab-estatisticas" hidden>
+            <div class="section">
+                <div class="section-title" style="margin-bottom: 14px;">Estatísticas de 120 anos do Rio Negro</div>
+                <div id="est-conteudo" style="font-size: 0.95em; line-height: 1.7;">Calculando…</div>
+            </div>
+        </div><!-- /aba-estatisticas -->
 
         <div class="footer">
             Dashboard · Dados: Porto de Manaus · Atualizado em <span id="footer-data">—</span> · <span style="opacity:0.5">v2026.09.09-2</span><br><span style="opacity:0.4;font-size:0.85em;">© 2026 jsavino · Todos os direitos reservados</span>
@@ -1843,11 +1858,131 @@
         })();
 
 
+        // ============= ESTATÍSTICAS (calculadas da série completa) =============
+        (function () {
+            const U = window.RIO_UTIL;
+            const raiz = document.getElementById("est-conteudo");
+            if (!U || !raiz || typeof ultimo === "undefined") return;
+            const dn = U.dn, get = U.get, quant = U.quant;
+            const AUL = ultimo.ano;
+            const nm = function (x) { return x.toFixed(2) + " m"; };
+            const pad = function (n) { return String(n).padStart(2, "0"); };
+            const dm = function (n) { const d = new Date(n * 86400000); return pad(d.getUTCDate()) + "/" + pad(d.getUTCMonth() + 1); };
+            const dmy = function (n) { return dm(n) + "/" + new Date(n * 86400000).getUTCFullYear(); };
+            const ultimoDn = dn(ultimo.ano, ultimo.mes, ultimo.dia);
+            // picos e fundos por ano
+            const picos = [], fundos = [];
+            for (let y = 1903; y < AUL; y++) {
+                let mx = null, mxd = null, cnt = 0;
+                for (let n = dn(y, 1, 1); n < dn(y + 1, 1, 1); n++) { const v = get(n); if (v === null) continue; cnt++; if (mx === null || v > mx) { mx = v; mxd = n; } }
+                if (cnt >= 330) picos.push({ ano: y, v: mx, d: mxd, est: y >= 2015 && y <= 2023 });
+                if (dn(y + 1, 1, 31) <= ultimoDn) {
+                    let mn = null, mnd = null, c2 = 0;
+                    for (let n = dn(y, 8, 1); n <= dn(y + 1, 1, 31); n++) { const v = get(n); if (v === null) continue; c2++; if (mn === null || v < mn) { mn = v; mnd = n; } }
+                    if (c2 >= 170) fundos.push({ ano: y, v: mn, d: mnd, est: y >= 2015 && y <= 2023 });
+                }
+            }
+            if (picos.length < 20 || fundos.length < 20) { raiz.innerHTML = "Dados insuficientes para estatísticas."; return; }
+            const reg = function (arr) {
+                const n = arr.length; let sx = 0, sy = 0; arr.forEach(function (p) { sx += p.ano; sy += p.v; });
+                const mx = sx / n, my = sy / n; let sxx = 0, sxy = 0, syy = 0;
+                arr.forEach(function (p) { sxx += (p.ano - mx) * (p.ano - mx); sxy += (p.ano - mx) * (p.v - my); syy += (p.v - my) * (p.v - my); });
+                const b = sxy / sxx, a = my - b * mx; let sse = 0; arr.forEach(function (p) { const e = p.v - (a + b * p.ano); sse += e * e; });
+                const se = Math.sqrt(sse / (n - 2) / sxx);
+                return { a: a, b: b, t: b / se };
+            };
+            const rP = reg(picos), rF = reg(fundos);
+            const clara = function (r) { return Math.abs(r.t) > 2.58; };
+            const mediaPeriodo = function (arr, lo, hi) { const s = arr.filter(function (p) { return p.ano >= lo && p.ano <= hi; }); return s.length ? s.reduce(function (t, p) { return t + p.v; }, 0) / s.length : null; };
+            let html = "";
+            // 1. Hoje vs histórico
+            const vals = [];
+            for (let y = 1902; y < AUL; y++) { const v = get(dn(y, ultimo.mes, ultimo.dia)); if (v !== null) vals.push({ ano: y, v: v }); }
+            const menores = vals.filter(function (p) { return p.v < ultimo.cota; }).length;
+            const pct = Math.round(100 * menores / vals.length);
+            const ordenados = vals.slice().sort(function (a, b) { return a.v - b.v; });
+            const medHoje = quant(vals.map(function (p) { return p.v; }), 0.5);
+            const rank26 = picos.filter(function (p) { return p.v > picoAno.cota; }).length + 1;
+            html += "<div class='est-bloco'><div class='est-titulo'>Hoje, " + pad(ultimo.dia) + "/" + pad(ultimo.mes) + ", comparado a " + vals.length + " anos</div>";
+            html += "<p class='est-destaque'>Com " + nm(ultimo.cota) + ", o rio está <b>" + (pct <= 50 ? "mais baixo" : "mais alto") + " que " + (pct <= 50 ? 100 - pct : pct) + "% dos anos</b> nesta data. A mediana é " + nm(medHoje) + ".</p>";
+            html += "<p>Os 3 anos mais baixos nesta data: " + ordenados.slice(0, 3).map(function (p) { return p.ano + " (" + nm(p.v) + ")"; }).join(", ") + ". O pico de " + AUL + " (" + nm(picoAno.cota) + ") é o " + rank26 + "º maior de " + (picos.length + 1) + " anos.</p></div>";
+            // 2. Tendência
+            const top5c = picos.slice().sort(function (a, b) { return b.v - a.v; }).slice(0, 5);
+            const top5s = fundos.slice().sort(function (a, b) { return a.v - b.v; }).slice(0, 5);
+            const rec = function (arr) { return arr.filter(function (p) { return p.ano >= 2001; }).length; };
+            html += "<div class='est-bloco'><div class='est-titulo'>Tendência</div>";
+            html += "<p class='est-destaque'>" + (clara(rP) ? (rP.b > 0 ? "As cheias estão ficando maiores: <b>+" : "As cheias estão ficando menores: <b>") + (rP.b * 10).toFixed(2) + " m por década</b>." : "Os picos de cheia não têm tendência clara (" + (rP.b * 10).toFixed(2) + " m por década).") + "</p>";
+            html += "<p>Média dos picos: " + [[1903, 1950], [1951, 1980], [1981, 2000], [2001, AUL - 1]].map(function (r) { const m = mediaPeriodo(picos, r[0], r[1]); return m === null ? "" : r[0] + "-" + r[1] + ": " + nm(m); }).join(" · ") + ". " + rec(top5c) + " das 5 maiores cheias são de 2001 em diante.</p>";
+            html += "<p class='est-destaque'>" + (clara(rF) ? "Os fundos de seca estão " + (rF.b > 0 ? "subindo" : "caindo") + ": <b>" + (rF.b * 10).toFixed(2) + " m por década</b>." : "A seca média não mudou de forma clara (" + (rF.b * 10).toFixed(2) + " m por década).") + " Mas " + rec(top5s) + " das 5 secas mais fortes são de 2001 em diante.</p></div>";
+            html += "<div class='chart-container'><canvas id='chartEstPicos'></canvas></div>";
+            // 3. Rankings
+            const linhas = function (arr) { return arr.map(function (p, i) { return "<tr><td>" + (i + 1) + "º</td><td>" + p.ano + (p.est ? " <span class='est-tag' title='Ano estimado a partir de Manacapuru'>est.</span>" : "") + "</td><td>" + dmy(p.d) + "</td><td><b>" + nm(p.v) + "</b></td></tr>"; }).join(""); };
+            html += "<div class='est-bloco'><div class='est-titulo'>Maiores cheias e secas</div><div class='est-duas'>";
+            html += "<table class='data-table'><thead><tr><th></th><th>Cheia</th><th>Dia</th><th>Pico</th></tr></thead><tbody>" + linhas(top5c) + "</tbody></table>";
+            html += "<table class='data-table'><thead><tr><th></th><th>Seca</th><th>Dia</th><th>Fundo</th></tr></thead><tbody>" + linhas(top5s) + "</tbody></table></div></div>";
+            // 4. Retorno de secas
+            const ret = [15, 14, 13].map(function (lim) { const n = fundos.filter(function (p) { return p.v <= lim; }).length; return n ? "abaixo de " + lim + " m: 1 a cada " + Math.round(fundos.length / n) + " anos" : "abaixo de " + lim + " m: nunca"; });
+            html += "<div class='est-bloco'><div class='est-titulo'>Frequência de secas fortes</div><p class='est-destaque'>Fundo " + ret.join(" · fundo ") + ".</p></div>";
+            // 5. Faixa do ano
+            html += "<div class='est-bloco'><div class='est-titulo'>O ano típico e " + AUL + "</div></div><div class='chart-container chart-container-tall'><canvas id='chartEstFaixa'></canvas></div>";
+            // 6. Passeios
+            const comp = [];
+            for (let y = 1903; y < AUL; y++) { let c = 0; for (let n = dn(y, 1, 1); n < dn(y + 1, 1, 1); n++) if (get(n) !== null) c++; if (c >= 330) comp.push(y); }
+            const diasAbertos = function (p, anos) {
+                let tot = 0;
+                anos.forEach(function (y) { let c = 0, aberto = 0; for (let n = dn(y, 1, 1); n < dn(y + 1, 1, 1); n++) { const v = get(n); if (v === null) continue; c++; if (p.tipo === "ate" ? v <= p.limite : v >= p.limite) aberto++; } tot += aberto / c * 365; });
+                return tot / anos.length;
+            };
+            const lp = (window.PASSEIOS_LISTA || []).filter(function (p) { return p.tipo !== "sempre"; }).slice().sort(function (a, b) { return a.limite - b.limite; });
+            if (lp.length) {
+                const rec01 = comp.filter(function (y) { return y >= 2001; });
+                let mais = 0;
+                const rows = lp.map(function (p) {
+                    const t = diasAbertos(p, comp), r = diasAbertos(p, rec01); if (r > t) mais++;
+                    return "<tr><td>" + p.nome + "</td><td>" + (p.tipo === "ate" ? "até " : "acima de ") + p.limite + " m</td><td>" + Math.round(t) + "</td><td><b>" + Math.round(r) + "</b> " + (r > t + 5 ? "<span style='color:var(--success)'>▲</span>" : r < t - 5 ? "<span style='color:var(--danger)'>▼</span>" : "") + "</td></tr>";
+                }).join("");
+                html += "<div class='est-bloco'><div class='est-titulo'>Dias abertos por ano</div><p class='est-destaque'>Desde 2001, <b>" + mais + " de " + lp.length + " passeios</b> ficam abertos mais dias por ano que na média de todos os anos. Os de nível alto ganharam; os de nível baixo perderam.</p>";
+                html += "<table class='data-table'><thead><tr><th>Passeio</th><th>Abre</th><th>Todos os anos</th><th>Desde 2001</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
+            }
+            html += "<p style='opacity:0.6;font-size:0.85em;margin-top:14px;'>Base: série oficial da ANA/SGB de Manaus (1902-2014), 2015-2023 estimado a partir de Manacapuru e dados do app. Anos estimados podem ter picos cerca de 20 cm acima do real; marcados como \"est.\". Tendência considerada clara quando estatisticamente significativa (regressão linear, p &lt; 0,01).</p>";
+            raiz.innerHTML = html;
+            // gráfico picos
+            const cp = document.getElementById("chartEstPicos");
+            const labelsA = picos.map(function (p) { return p.ano; });
+            new Chart(cp.getContext("2d"), {
+                data: { labels: labelsA, datasets: [
+                    { type: "bar", label: "Pico anual (m)", data: picos.map(function (p) { return p.v; }), backgroundColor: picos.map(function (p) { return p.est ? "rgba(255,152,0,0.75)" : "rgba(0,212,255,0.7)"; }), order: 2 },
+                    { type: "line", label: "Tendência", data: picos.map(function (p) { return rP.a + rP.b * p.ano; }), borderColor: "#fff", borderWidth: 2, borderDash: [6, 4], pointRadius: 0, order: 1 }
+                ] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "#b0bec5" } }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ": " + c.parsed.y.toFixed(2) + " m"; } } } },
+                    scales: { x: { ticks: { color: "#78909c", maxTicksLimit: 12 }, grid: { display: false } }, y: { min: 20, ticks: { color: "#78909c", callback: function (v) { return v + " m"; } }, grid: { color: "rgba(255,255,255,0.05)" } } } }
+            });
+            // gráfico faixa do ano (dia do ano)
+            const K = 365, p10 = [], p50 = [], p90 = [], lab = [];
+            for (let k = 0; k < K; k++) {
+                const vs = []; for (let y = 1903; y < AUL; y++) { const v = get(dn(y, 1, 1) + k); if (v !== null) vs.push(v); }
+                p10.push(vs.length >= 30 ? quant(vs, 0.1) : null); p50.push(vs.length >= 30 ? quant(vs, 0.5) : null); p90.push(vs.length >= 30 ? quant(vs, 0.9) : null);
+                lab.push(dm(dn(2001, 1, 1) + k));
+            }
+            const anoLinha = function (y, cor) { return { label: String(y), data: lab.map(function (_, k) { const n = dn(y, 1, 1) + k; return n <= ultimoDn ? get(n) : null; }), borderColor: cor, borderWidth: 2, pointRadius: 0, tension: 0.2, fill: false, spanGaps: false }; };
+            new Chart(document.getElementById("chartEstFaixa").getContext("2d"), {
+                type: "line",
+                data: { labels: lab, datasets: [
+                    { label: "90% dos anos ficam abaixo", data: p90, borderColor: "rgba(255,255,255,0)", backgroundColor: "rgba(255,255,255,0.10)", pointRadius: 0, fill: "+1" },
+                    { label: "10% dos anos ficam abaixo", data: p10, borderColor: "rgba(255,255,255,0)", pointRadius: 0, fill: false },
+                    { label: "Mediana", data: p50, borderColor: "#b0bec5", borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false },
+                    anoLinha(AUL - 2, "#66b2ff"), anoLinha(AUL - 1, "#ff9800"), anoLinha(AUL, "#00d4ff")
+                ] },
+                options: { responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false }, plugins: { legend: { labels: { color: "#b0bec5", filter: function (it) { return it.datasetIndex !== 1; } } }, tooltip: { callbacks: { label: function (c) { return c.parsed.y === null ? null : c.dataset.label + ": " + c.parsed.y.toFixed(2) + " m"; } } } },
+                    scales: { x: { ticks: { color: "#78909c", maxTicksLimit: 12 }, grid: { color: "rgba(255,255,255,0.05)" } }, y: { ticks: { color: "#78909c", callback: function (v) { return v + " m"; } }, grid: { color: "rgba(255,255,255,0.05)" } } } }
+            });
+        })();
+
         // ============= ABAS =============
         (function () {
             const botoes = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
-            const painel = { geral: document.getElementById("aba-geral"), passeios: document.getElementById("aba-passeios") };
-            if (!botoes.length || !painel.geral || !painel.passeios) return;
+            const painel = { geral: document.getElementById("aba-geral"), passeios: document.getElementById("aba-passeios"), estatisticas: document.getElementById("aba-estatisticas") };
+            if (!botoes.length || !painel.geral || !painel.passeios || !painel.estatisticas) return;
             function ativar(nome, focar) {
                 if (!painel[nome]) nome = "geral";
                 botoes.forEach(function (b) {
@@ -1873,7 +2008,7 @@
                 });
             });
             let inicial = "geral";
-            if (location.hash === "#passeios") inicial = "passeios";
+            if (location.hash.length > 1 && painel[location.hash.slice(1)]) inicial = location.hash.slice(1);
             else if (location.hash === "") { try { inicial = localStorage.getItem("rio-aba") || "geral"; } catch (e) {} }
             if (inicial !== "geral") ativar(inicial);
         })();
