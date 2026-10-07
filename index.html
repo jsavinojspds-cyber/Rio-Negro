@@ -859,8 +859,10 @@
                     <button class="filter-btn active" data-year-filter="all">2024 · 2025 · 2026</button>
                     <button class="filter-btn" data-year-filter="2425">2024 vs 2025</button>
                     <button class="filter-btn" data-year-filter="2526">2025 vs 2026</button>
+                    <button class="filter-btn" data-year-filter="2426">2024 vs 2026</button>
                 </div>
             </div>
+            <div id="comparacao-diferenca" style="margin: 0 0 10px 0; font-size: 0.95em; font-weight: 600;"></div>
             <div class="chart-container chart-container-tall">
                 <canvas id="chartComparacao"></canvas>
             </div>
@@ -896,6 +898,16 @@
                 <canvas id="chartProjecao"></canvas>
             </div>
             <div id="projecao-texto" style="margin-top: 14px; font-size: 0.9em; line-height: 1.7;"></div>
+        </div>
+
+        <!-- CALENDÁRIO DE PASSEIOS -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Calendário de Passeios · Meses Acessíveis</div>
+                <div class="filter-group" id="calendario-anos"></div>
+            </div>
+            <div id="calendario-passeios" style="overflow-x: auto;"></div>
+            <div style="margin-top: 10px; font-size: 0.8em; color: var(--text-secondary);">🟩 acessível o mês todo · 🟨 parte do mês (% dos dias) · 🟥 inacessível · cinza: sem dados ainda</div>
         </div>
 
         <!-- HEATMAP MENSAL -->
@@ -1413,7 +1425,7 @@
             });
             
             const datasets = [];
-            if (filtro === 'all' || filtro === '2425') {
+            if (filtro === 'all' || filtro === '2425' || filtro === '2426') {
                 datasets.push({
                     label: '2024',
                     data: d2024,
@@ -1435,7 +1447,7 @@
                     pointRadius: 0,
                 });
             }
-            if (filtro === 'all' || filtro === '2526') {
+            if (filtro === 'all' || filtro === '2526' || filtro === '2426') {
                 datasets.push({
                     label: '2026',
                     data: d2026,
@@ -1448,6 +1460,22 @@
                 });
             }
             
+            // Diferença ano contra ano (só quando há dois anos selecionados)
+            const paresDif = { "2425": [d2024, d2025, "2024", "2025"], "2526": [d2025, d2026, "2025", "2026"], "2426": [d2024, d2026, "2024", "2026"] };
+            const parDif = paresDif[filtro];
+            const elDif = document.getElementById("comparacao-diferenca");
+            if (elDif) {
+                let ultDif = -1;
+                if (parDif) { for (let i = 0; i < maxLen; i++) { if (parDif[0][i] != null && parDif[1][i] != null) ultDif = i; } }
+                if (ultDif < 0) {
+                    elDif.innerHTML = "";
+                } else {
+                    const dif = parDif[1][ultDif] - parDif[0][ultDif];
+                    const corDif = dif > 0.004 ? "#4caf50" : (dif < -0.004 ? "#ff5252" : "#b2bac2");
+                    const txtDif = Math.abs(dif) < 0.005 ? "igual a" : (Math.abs(dif).toFixed(2) + " m " + (dif > 0 ? "acima de" : "abaixo de"));
+                    elDif.innerHTML = "Em " + labels[ultDif] + ", " + parDif[3] + " está <span style=\"color:" + corDif + ";\">" + txtDif + "</span> " + parDif[2] + ".";
+                }
+            }
             if (chartComparacao) chartComparacao.destroy();
             
             const ctx = document.getElementById('chartComparacao').getContext('2d');
@@ -1589,6 +1617,48 @@
             }
             html += "<br><span style=\"opacity:0.6;font-size:0.85em;\">Simulação, não previsão: repete a variação do rio em anos com mesmo nível e fase nesta época (" + anos.join(", ") + "). Cada ano é diferente; com poucos anos de histórico, trate como referência.</span>";
             el.innerHTML = html;
+        })();
+
+        // ============= CALENDÁRIO DE PASSEIOS =============
+        (function() {
+            const box = document.getElementById("calendario-passeios");
+            const btns = document.getElementById("calendario-anos");
+            if (!box || !btns) return;
+            const lista = (window.PASSEIOS_LISTA || []).filter(p => p.tipo !== "sempre");
+            const nomesMes = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            const porAno = {};
+            Object.keys(dados).forEach(k => {
+                const partes = k.split("-");
+                if (!porAno[partes[0]]) porAno[partes[0]] = {};
+                porAno[partes[0]][parseInt(partes[1], 10)] = dados[k];
+            });
+            const anosCal = Object.keys(porAno).filter(a => Object.keys(porAno[a]).length >= 6).sort();
+            if (!anosCal.length || !lista.length) return;
+            function renderCal(ano) {
+                let h = "<table style=\"width:100%;border-collapse:separate;border-spacing:2px;font-size:0.8em;\"><thead><tr><th style=\"text-align:left;padding:4px 6px;\">Passeio</th>";
+                nomesMes.forEach(m => { h += "<th style=\"padding:4px 2px;font-weight:600;\">" + m + "</th>"; });
+                h += "</tr></thead><tbody>";
+                lista.forEach(p => {
+                    const rotulo = p.tipo === "ate" ? "até " + p.limite + " m" : "acima de " + p.limite + " m";
+                    h += "<tr><td style=\"padding:4px 6px;min-width:150px;\">" + p.nome + " <span style=\"opacity:0.55;white-space:nowrap;\">(" + rotulo + ")</span></td>";
+                    for (let m = 1; m <= 12; m++) {
+                        const arr = porAno[ano][m];
+                        if (!arr || !arr.length) { h += "<td style=\"background:rgba(120,130,140,0.18);text-align:center;border-radius:4px;\">&nbsp;</td>"; continue; }
+                        const ok = arr.filter(c => p.tipo === "ate" ? c <= p.limite : c >= p.limite).length;
+                        const pct = ok / arr.length;
+                        if (pct >= 0.97) h += "<td style=\"background:rgba(76,175,80,0.8);border-radius:4px;\">&nbsp;</td>";
+                        else if (pct <= 0.03) h += "<td style=\"background:rgba(244,67,54,0.5);border-radius:4px;\">&nbsp;</td>";
+                        else h += "<td style=\"background:rgba(255,193,7,0.85);color:#1a1a1a;text-align:center;font-weight:700;border-radius:4px;padding:3px 0;\">" + Math.round(pct * 100) + "%</td>";
+                    }
+                    h += "</tr>";
+                });
+                h += "</tbody></table>";
+                box.innerHTML = h;
+                btns.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.anoCal === ano));
+            }
+            btns.innerHTML = anosCal.map(a => "<button class=\"filter-btn\" data-ano-cal=\"" + a + "\">" + a + "</button>").join("");
+            btns.querySelectorAll("button").forEach(b => b.addEventListener("click", () => renderCal(b.dataset.anoCal)));
+            renderCal(anosCal[anosCal.length - 1]);
         })();
 
         // ============= GRÁFICO MENSAL =============
